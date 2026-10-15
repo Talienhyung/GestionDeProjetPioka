@@ -49,7 +49,7 @@ export default async function AccueilPage() {
         <h2 className="mb-2 text-lg font-bold">Mes tâches en cours</h2>
         {mesTaches.length === 0 ? (
           <p className="text-sm opacity-70">
-            Tu n'as rien en cours. <Link href="/cap" className="underline">Va prendre une tâche !</Link>
+            Tu n’as rien en cours. <Link href="/cap" className="underline">Va prendre une tâche !</Link>
           </p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -61,7 +61,7 @@ export default async function AccueilPage() {
       <section>
         <h2 className="mb-2 text-lg font-bold">Mes badges</h2>
         {badges.length === 0 ? (
-          <p className="text-sm opacity-70">Aucun badge pour l'instant. Le premier arrive dès ta première tâche validée.</p>
+          <p className="text-sm opacity-70">Aucun badge pour l’instant. Le premier arrive dès ta première tâche validée.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {badges.map((b) => (

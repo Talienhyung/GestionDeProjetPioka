@@ -28,7 +28,7 @@ export default async function RolesPage() {
         </details>
       ) : null}
 
-      {roles.length === 0 ? <p className="text-sm opacity-70">Aucun rôle défini pour l'instant.</p> : null}
+      {roles.length === 0 ? <p className="text-sm opacity-70">Aucun rôle défini pour l’instant.</p> : null}
 
       {roles.map((role) => (
         <article key={role.id} className="rounded-2xl border bg-white p-4 dark:bg-stone-900">

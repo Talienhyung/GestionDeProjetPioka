@@ -27,7 +27,7 @@ export function PhaseColumn({ phase, tasks, currentUserId, isCurrentPhase }: Pro
 
       <div className="flex flex-col gap-2">
         {tasks.length === 0 ? (
-          <p className="text-sm opacity-70">Aucune tâche dans cette phase pour l'instant.</p>
+          <p className="text-sm opacity-70">Aucune tâche dans cette phase pour l’instant.</p>
         ) : (
           tasks.map((task) => <TaskCard key={task.id} task={task} currentUserId={currentUserId} />)
         )}

@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.github
+.superpowers
+docs
+e2e
+tests
+sauvegardes
+.uploads
+*.db
+*.db-journal
+.env
+.env.local
+playwright-report
+test-results

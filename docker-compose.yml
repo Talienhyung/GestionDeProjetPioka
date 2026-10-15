@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:/data/cap.db"
+      UPLOAD_DIR: "/data/uploads"
+      SUPER_ADMIN_USERNAME: "${SUPER_ADMIN_USERNAME:-admin}"
+      SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD:?définis SUPER_ADMIN_PASSWORD dans .env}"
+    volumes:
+      - cap-data:/data
+
+volumes:
+  cap-data:

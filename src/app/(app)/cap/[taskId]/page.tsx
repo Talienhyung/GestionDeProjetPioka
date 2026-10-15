@@ -36,9 +36,9 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
       {task.description ? <p className="whitespace-pre-wrap">{task.description}</p> : null}
 
       <section>
-        <h2 className="font-bold">Qui s'en occupe</h2>
+        <h2 className="font-bold">Qui s’en occupe</h2>
         {task.assignments.length === 0 ? (
-          <p className="text-sm opacity-70">Personne pour l'instant.</p>
+          <p className="text-sm opacity-70">Personne pour l’instant.</p>
         ) : (
           <ul className="mt-1 flex flex-wrap gap-2">
             {task.assignments.map((a) => (

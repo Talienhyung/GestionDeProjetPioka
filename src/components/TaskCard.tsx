@@ -32,7 +32,7 @@ export function TaskCard({ task, currentUserId }: Props) {
           {task.assignments.map((a) => a.user.displayName).join(', ')}
         </p>
       ) : (
-        <p className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">Personne dessus pour l'instant</p>
+        <p className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">Personne dessus pour l’instant</p>
       )}
     </Link>
   )

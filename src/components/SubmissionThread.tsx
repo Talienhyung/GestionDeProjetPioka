@@ -58,7 +58,7 @@ export function SubmissionThread({ submissions }: { submissions: Submission[] })
           ) : null}
 
           {submission.decision === null ? (
-            <p className="mt-3 text-sm opacity-70">⏳ En attente de la réponse d'un chef.</p>
+            <p className="mt-3 text-sm opacity-70">⏳ En attente de la réponse d’un chef.</p>
           ) : null}
         </article>
       ))}

@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Notre CAP — site de gestion de projet Pionniers-Caravelles
 
-## Getting Started
+Un site pour qu'une caravane mène son CAP (Choisir · Agir · Partager) : les jeunes
+s'inscrivent sur les tâches et les rôles, rendent leur travail, gagnent des points
+et des badges ; les chefs valident ou renvoient à corriger.
 
-First, run the development server:
+- Conception : `docs/superpowers/specs/2026-10-15-cap-pionniers-design.md`
+- Plan d'implémentation : `docs/superpowers/plans/2026-10-15-cap-pionniers.md`
+
+## Installation sur ton serveur
+
+Prérequis : Docker et le plugin Compose.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <ton-dépôt> site-cap && cd site-cap
+echo "SUPER_ADMIN_PASSWORD=choisis-un-mot-de-passe-solide" > .env
+docker compose up -d --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le site écoute sur le port 3000. Au premier démarrage, le conteneur applique les
+migrations, crée les 10 badges, les 22 tâches types du catalogue, un premier CAP
+et le compte super admin (`admin` par défaut, `SUPER_ADMIN_USERNAME` pour en
+changer).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### HTTPS obligatoire
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Le cookie de session est marqué `Secure` en production : **sans HTTPS, personne ne
+peut se connecter**. Place le site derrière un reverse proxy (Caddy, Traefik,
+nginx) qui termine le TLS et transmet vers `http://localhost:3000`.
 
-## Learn More
+Exemple avec Caddy :
 
-To learn more about Next.js, take a look at the following resources:
+```
+cap.mondomaine.fr {
+    reverse_proxy localhost:3000
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Premiers pas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Connecte-toi en super admin, change le mot de passe initial quand le site le demande.
+2. `Comptes` : crée les comptes des chefs et des jeunes. **Note les mots de passe
+   provisoires, ils ne sont affichés qu'une fois.**
+3. `Pilotage` : donne un titre au CAP et choisis la phase en cours.
+4. `Créer des tâches` : pioche dans le catalogue ou écris les tiennes.
+5. `Rôles` : crée les rôles du projet (trésorier, intendant…).
 
-## Deploy on Vercel
+Un jeune qui oublie son mot de passe : un chef lui en génère un nouveau depuis
+`Les jeunes`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Sauvegarde
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+sh scripts/backup.sh /chemin/vers/sauvegardes
+```
+
+Copie cohérente de la base (`VACUUM INTO`) et archive des photos, horodatées,
+avec rotation sur les 30 dernières. À mettre dans cron :
+
+```
+0 3 * * * /chemin/vers/site-cap/scripts/backup.sh /chemin/vers/sauvegardes
+```
+
+Pour restaurer : arrête le conteneur, remplace `/data/cap.db` dans le volume par
+la sauvegarde choisie, redémarre.
+
+## Mise à jour
+
+```bash
+git pull && docker compose up -d --build
+```
+
+Les migrations s'appliquent automatiquement au démarrage.
+
+## Développement
+
+Node.js 20.19+ et npm.
+
+```bash
+npm install
+cp .env.example .env
+npx prisma migrate dev
+npx prisma db seed
+npm run dev        # http://localhost:3000
+```
+
+| Commande | Rôle |
+|---|---|
+| `npm test` | tests unitaires et d'intégration (Vitest) |
+| `npm run test:e2e` | parcours bout en bout (Playwright) |
+| `npm run build` | build de production (sortie standalone) |
+| `npx prisma studio` | inspecter la base |
+
+### Organisation du code
+
+```
+src/lib/domain/    règles pures : points, machine à états, badges, photos
+src/lib/services/  accès base ; chaque fonction reçoit le client Prisma et l'acteur
+src/lib/auth/      mots de passe, sessions, gardes
+src/app/           pages et actions serveur (les actions ne font qu'appeler un service)
+prisma/            schéma, migrations, amorçage
+tests/ · e2e/      tests
+```
+
+La logique de décision vit dans `src/lib/domain`, en fonctions pures testables
+sans base ni navigateur. Les actions serveur se contentent de lire la session,
+appeler une garde, puis un service.

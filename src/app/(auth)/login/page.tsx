@@ -52,7 +52,7 @@ export default function LoginPage() {
       </form>
 
       <p className="text-center text-xs opacity-70">
-        Mot de passe oublié ? Demande à un chef de t'en donner un nouveau.
+        Mot de passe oublié ? Demande à un chef de t’en donner un nouveau.
       </p>
     </main>
   )
