@@ -59,8 +59,11 @@ function resolve(ctx: TaskContext, action: TaskAction): TaskStatus | null {
       return ctx.status === 'PROPOSEE' ? 'REJETEE' : null
 
     case 'S_INSCRIRE':
+      // Spec §5 : uniquement OUVERTE ou EN_COURS. Rejoindre une tâche en cours
+      // de correction donnerait une part égale des points sans avoir travaillé.
       if (ctx.isParticipant) return null
-      return ['OUVERTE', 'EN_COURS', 'A_CORRIGER'].includes(ctx.status) ? ctx.status === 'OUVERTE' ? 'EN_COURS' : ctx.status : null
+      if (ctx.status === 'OUVERTE') return 'EN_COURS'
+      return ctx.status === 'EN_COURS' ? 'EN_COURS' : null
 
     case 'SE_DESINSCRIRE':
       if (!ctx.isParticipant || ctx.hasSubmission) return null

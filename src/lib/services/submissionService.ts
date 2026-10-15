@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import { computeTaskAward } from '@/lib/domain/points'
+import { computeTaskAward, maxBonus } from '@/lib/domain/points'
 import { nextStatus, type TaskContext } from '@/lib/domain/tasks'
 import { MAX_PHOTOS_PER_SUBMISSION, UploadError } from '@/lib/domain/uploads'
 import type { Actor, Difficulty, ReviewDecision, TaskStatus } from '@/lib/domain/types'
@@ -54,6 +54,14 @@ export async function submitTask(db: PrismaClient, actor: Actor, input: SubmitIn
     include: { project: true, assignments: true, _count: { select: { submissions: true } } },
   })
   if (!task) throw new NotFoundError('Tâche')
+
+  // Sans ce garde-fou, deux participants qui rendent en même temps laissent une
+  // carte orpheline dans la file du chef : une fois la tâche terminée, la
+  // seconde soumission ne peut plus être ni validée ni refusée.
+  const enAttente = await db.submission.findFirst({ where: { taskId: task.id, decision: null } })
+  if (enAttente) {
+    throw new ValidationError('Ce travail est déjà rendu et attend la réponse d\'un chef.')
+  }
 
   const ctx: TaskContext = {
     status: task.status as TaskStatus,
@@ -129,7 +137,12 @@ export async function reviewSubmission(db: PrismaClient, actor: Actor, input: Re
     }
 
     const participants = task.assignments.map((a) => a.userId)
-    const bonus = Math.max(0, Math.round(input.bonus ?? 0))
+    // Le bonus retenu est celui qui sera crédité : annoncer autre chose au
+    // jeune serait lui promettre des points qu'il ne reçoit pas.
+    const bonus = Math.min(
+      Math.max(0, Math.round(input.bonus ?? 0)),
+      maxBonus(task.difficulty as Difficulty, scale),
+    )
     const results: { userId: string; amount: number }[] = []
 
     if (accepted) {
@@ -210,16 +223,22 @@ export async function cancelValidation(db: PrismaClient, actor: Actor, taskId: s
     }
     const status = nextStatus(ctx, 'ANNULER_VALIDATION')
 
-    const entries = await tx.pointsEntry.findMany({ where: { taskId, reason: 'TACHE' } })
+    // On reprend le solde encore ouvert sur la tâche, pas toutes les lignes
+    // jamais écrites : sinon une seconde annulation reprendrait aussi les
+    // points d'une validation déjà annulée.
+    const entries = await tx.pointsEntry.findMany({
+      where: { taskId, reason: { in: ['TACHE', 'ANNULATION'] } },
+    })
+
+    const soldeParJeune = new Map<string, number>()
     for (const entry of entries) {
+      soldeParJeune.set(entry.userId, (soldeParJeune.get(entry.userId) ?? 0) + entry.amount)
+    }
+
+    for (const [userId, solde] of soldeParJeune) {
+      if (solde <= 0) continue
       await tx.pointsEntry.create({
-        data: {
-          userId: entry.userId,
-          projectId: entry.projectId,
-          amount: -entry.amount,
-          reason: 'ANNULATION',
-          taskId,
-        },
+        data: { userId, projectId: task.projectId, amount: -solde, reason: 'ANNULATION', taskId },
       })
     }
 

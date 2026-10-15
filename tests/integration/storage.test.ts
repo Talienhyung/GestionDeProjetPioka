@@ -64,4 +64,25 @@ describe('storePhoto', () => {
     const { readPhoto } = await import('@/lib/storage')
     await expect(readPhoto('../../etc/passwd')).rejects.toThrow(/nom de fichier/i)
   })
+
+describe('limite de taille', () => {
+  it('refuse une vraie image de plus de 8 Mo sans rien écrire sur le disque', async () => {
+    const { storePhoto } = await import('@/lib/storage')
+    const { readdirSync } = await import('node:fs')
+
+    // Du bruit aléatoire : incompressible, donc le PNG dépasse franchement 8 Mo.
+    const largeur = 2600
+    const hauteur = 2600
+    const bruit = Buffer.allocUnsafe(largeur * hauteur * 3)
+    for (let i = 0; i < bruit.length; i += 1) bruit[i] = (i * 2654435761) % 256
+    const enorme = await sharp(bruit, { raw: { width: largeur, height: hauteur, channels: 3 } })
+      .png({ compressionLevel: 0 })
+      .toBuffer()
+    expect(enorme.byteLength).toBeGreaterThan(8 * 1024 * 1024)
+
+    const avant = readdirSync(dir).length
+    await expect(storePhoto(enorme, 'enorme.png')).rejects.toThrow(/8 Mo/)
+    expect(readdirSync(dir).length).toBe(avant)
+  })
+})
 })

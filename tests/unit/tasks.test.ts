@@ -27,8 +27,10 @@ describe('inscription', () => {
     expect(canPerform(ctx({ status: 'SOUMISE', participantCount: 1 }), 'S_INSCRIRE')).toBe(false)
   })
 
-  it('autorise à reprendre une tâche à corriger', () => {
-    expect(canPerform(ctx({ status: 'A_CORRIGER', participantCount: 1 }), 'S_INSCRIRE')).toBe(true)
+  it('refuse de rejoindre une tâche à corriger', () => {
+    // Spec §5 : on ne s'inscrit que sur OUVERTE ou EN_COURS. Sinon un jeune
+    // rejoindrait un travail déjà rédigé et prendrait une part égale des points.
+    expect(canPerform(ctx({ status: 'A_CORRIGER', participantCount: 1 }), 'S_INSCRIRE')).toBe(false)
   })
 })
 

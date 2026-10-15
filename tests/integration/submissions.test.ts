@@ -180,4 +180,52 @@ describe('soumission et revue', () => {
     expect((await t.prisma.task.findUniqueOrThrow({ where: { id: task.id } })).status).toBe('A_CORRIGER')
     expect(await getScore(t.prisma, lucie.id)).toBe(5) // les points de la tâche repris, le badge reste
   })
+
+  it('refuse une seconde soumission tant que la première attend un chef', async () => {
+    const task = await tachePrete('MOYEN', [lucie, tom])
+    await submitTask(t.prisma, lucie, { taskId: task.id, message: 'v1', photos: [] })
+
+    await expect(submitTask(t.prisma, tom, { taskId: task.id, message: 'doublon', photos: [] }))
+      .rejects.toThrow(/attend la réponse/i)
+    expect(await t.prisma.submission.count({ where: { taskId: task.id } })).toBe(1)
+  })
+
+  it('enregistre le bonus plafonné, celui qui a réellement été crédité', async () => {
+    const task = await tachePrete()
+    const { submissionId } = await submitTask(t.prisma, lucie, { taskId: task.id, message: '', photos: [] })
+
+    await reviewSubmission(t.prisma, chef, { submissionId, decision: 'ACCEPTEE', bonus: 9999 })
+
+    const submission = await t.prisma.submission.findUniqueOrThrow({ where: { id: submissionId } })
+    expect(submission.bonusPoints).toBe(25)
+    expect(await getScore(t.prisma, lucie.id)).toBe(55) // 25 + 25 de bonus plafonné + 5 du badge
+  })
+
+  it('ne reprend que les points de la dernière validation quand on annule deux fois', async () => {
+    const task = await tachePrete()
+
+    const a = await submitTask(t.prisma, lucie, { taskId: task.id, message: 'v1', photos: [] })
+    await reviewSubmission(t.prisma, chef, { submissionId: a.submissionId, decision: 'ACCEPTEE' })
+    await cancelValidation(t.prisma, chef, task.id)
+
+    const b = await submitTask(t.prisma, lucie, { taskId: task.id, message: 'v2', photos: [] })
+    await reviewSubmission(t.prisma, chef, { submissionId: b.submissionId, decision: 'ACCEPTEE' })
+    await cancelValidation(t.prisma, chef, task.id)
+
+    expect(await getScore(t.prisma, lucie.id)).toBe(5) // il ne reste que le badge
+  })
+
+  it('ne crédite qu une fois si deux revues partent en même temps', async () => {
+    const task = await tachePrete()
+    const { submissionId } = await submitTask(t.prisma, lucie, { taskId: task.id, message: '', photos: [] })
+
+    const issues = await Promise.allSettled([
+      reviewSubmission(t.prisma, chef, { submissionId, decision: 'ACCEPTEE' }),
+      reviewSubmission(t.prisma, chef, { submissionId, decision: 'ACCEPTEE' }),
+    ])
+
+    expect(issues.filter((issue) => issue.status === 'fulfilled')).toHaveLength(1)
+    expect(await t.prisma.pointsEntry.count({ where: { submissionId, reason: 'TACHE' } })).toBe(1)
+    expect(await getScore(t.prisma, lucie.id)).toBe(30)
+  })
 })

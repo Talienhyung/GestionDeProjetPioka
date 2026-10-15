@@ -1,7 +1,7 @@
 import type { Db } from '@/lib/db'
 import { type TaskAction, type TaskContext, nextStatus } from '@/lib/domain/tasks'
 import type { Actor, Difficulty, Phase, TaskStatus } from '@/lib/domain/types'
-import { PHASES, isChef } from '@/lib/domain/types'
+import { DIFFICULTIES, PHASES, isChef } from '@/lib/domain/types'
 import { NotFoundError, ValidationError } from './errors'
 import { notify, notifyMany } from './notificationService'
 
@@ -12,6 +12,22 @@ export interface CreateTaskInput {
   phase: Phase
   difficulty: Difficulty
   dueDate?: Date | null
+}
+
+/**
+ * Les valeurs énumérées arrivent d'un formulaire : rien ne garantit qu'elles
+ * appartiennent à la nomenclature. Une phase inventée casserait le tableau.
+ */
+export function assertPhase(value: string): Phase {
+  if (!PHASES.includes(value as Phase)) throw new ValidationError(`Phase inconnue : « ${value} ».`)
+  return value as Phase
+}
+
+export function assertDifficulty(value: string): Difficulty {
+  if (!DIFFICULTIES.includes(value as Difficulty)) {
+    throw new ValidationError(`Difficulté inconnue : « ${value} ».`)
+  }
+  return value as Difficulty
 }
 
 async function loadTask(db: Db, taskId: string) {
@@ -48,6 +64,8 @@ async function chefIds(db: Db): Promise<string[]> {
 
 export async function createTask(db: Db, actor: Actor, input: CreateTaskInput) {
   if (!input.title.trim()) throw new ValidationError('Le titre de la tâche est obligatoire.')
+  const phase = assertPhase(input.phase)
+  const difficulty = assertDifficulty(input.difficulty)
 
   const project = await db.project.findUnique({ where: { id: input.projectId } })
   if (!project) throw new NotFoundError('CAP')
@@ -60,8 +78,8 @@ export async function createTask(db: Db, actor: Actor, input: CreateTaskInput) {
       projectId: input.projectId,
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
-      phase: input.phase,
-      difficulty: input.difficulty,
+      phase,
+      difficulty,
       status,
       createdById: actor.id,
       dueDate: input.dueDate ?? null,
@@ -170,6 +188,10 @@ export async function listBoard(db: Db, projectId: string) {
   })
 
   const board = Object.fromEntries(PHASES.map((phase) => [phase, [] as typeof tasks])) as Record<Phase, typeof tasks>
-  for (const task of tasks) board[task.phase as Phase].push(task)
+  for (const task of tasks) {
+    // Une phase hors nomenclature (donnée ancienne) est ignorée plutôt que de
+    // faire tomber la page pour toute l'unité.
+    board[task.phase as Phase]?.push(task)
+  }
   return board
 }

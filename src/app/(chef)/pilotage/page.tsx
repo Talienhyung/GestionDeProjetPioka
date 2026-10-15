@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { ActionButton } from '@/components/ActionButton'
 import { NewProjectForm } from '@/components/NewProjectForm'
 import { ProgressBar } from '@/components/ProgressBar'
@@ -73,11 +74,13 @@ export default async function PilotagePage() {
           <h2 className="mb-2 text-lg font-bold">CAP archivés</h2>
           <ul className="flex flex-col gap-2">
             {archives.map((archive) => (
-              <li key={archive.id} className="rounded-xl border p-3 text-sm">
-                <strong>{archive.title}</strong>
-                <span className="block opacity-70">
-                  archivé le {archive.archivedAt?.toLocaleDateString('fr-FR')}
-                </span>
+              <li key={archive.id}>
+                <Link href={`/archives/${archive.id}`} className="block rounded-xl border p-3 text-sm">
+                  <strong>{archive.title}</strong>
+                  <span className="block opacity-70">
+                    archivé le {archive.archivedAt?.toLocaleDateString('fr-FR')}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>

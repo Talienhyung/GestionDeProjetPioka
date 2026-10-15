@@ -20,8 +20,17 @@ test('inscription, soumission, refus, correction, validation et points', async (
   await expect(page.getByText('Tom')).toBeVisible()
 
   await page.getByPlaceholder('Raconte ce que tu as fait').fill('Budget prêt, voir le tableau.')
+  await page.getByLabel(/Photos/).setInputFiles('e2e/fixtures/photo.jpg')
   await page.getByRole('button', { name: 'Soumettre aux chefs' }).click()
   await expect(page.getByText('En attente de la réponse')).toBeVisible()
+
+  // La photo doit réellement se charger dans le navigateur, pas seulement
+  // exister en base : naturalWidth à 0 signifie image cassée.
+  const photo = page.getByRole('img').first()
+  await expect(photo).toBeVisible()
+  await expect
+    .poll(async () => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0)
 
   // Le chef refuse avec un commentaire.
   await seConnecter(page, 'sarah', 'chef-mdp-2027')

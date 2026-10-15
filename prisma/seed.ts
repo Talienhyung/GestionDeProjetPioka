@@ -43,7 +43,9 @@ const TEMPLATES = [
 
 async function main() {
   for (const badge of BADGES) {
-    await prisma.badge.upsert({ where: { code: badge.code }, update: badge, create: badge })
+    // update vide : un seuil ou des points ajustés par le super admin ne doivent
+    // pas être réécrits au prochain démarrage du conteneur.
+    await prisma.badge.upsert({ where: { code: badge.code }, update: {}, create: badge })
   }
 
   if ((await prisma.taskTemplate.count({ where: { isBuiltin: true } })) === 0) {

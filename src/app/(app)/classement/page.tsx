@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { getLeaderboard } from '@/lib/services/pointsService'
@@ -17,6 +18,9 @@ export default async function ClassementPage() {
       <header>
         <h1 className="text-2xl font-bold">Classement</h1>
         <p className="text-sm opacity-70">{project.title}</p>
+        <Link href="/archives" className="text-sm underline">
+          Voir les CAP précédents
+        </Link>
       </header>
 
       {classement.length === 0 ? (

@@ -36,6 +36,12 @@ export function SubmissionThread({ submissions }: { submissions: Submission[] })
                     alt={photo.originalName}
                     width={photo.width}
                     height={photo.height}
+                    // L'optimiseur de Next refait la requête sans les cookies :
+                    // la route protégée lui répond 401 et l'image reste cassée.
+                    // Les photos sont déjà réduites à 1600 px en WebP à
+                    // l'enregistrement, et cela évite une copie en clair dans
+                    // le cache d'images.
+                    unoptimized
                     className="h-24 w-full rounded-lg object-cover"
                   />
                 </li>

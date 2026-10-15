@@ -2,11 +2,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireUser } from '@/lib/auth/guard'
+import { requireChef, requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
-import { submitTask } from '@/lib/services/submissionService'
-import { joinTask, leaveTask } from '@/lib/services/taskService'
+import { cancelValidation, submitTask } from '@/lib/services/submissionService'
+import { joinTask, leaveTask, removeParticipant } from '@/lib/services/taskService'
 
 export async function joinAction(taskId: string): Promise<FormState> {
   const user = await requireUser()
@@ -51,4 +51,29 @@ export async function submitAction(_prev: FormState, formData: FormData): Promis
 
   revalidatePath(`/cap/${taskId}`)
   return { success: 'C\'est envoyé ! Un chef va regarder ça.' }
+}
+
+/** Un chef retire un participant : le seul recours une fois le travail rendu. */
+export async function removeParticipantAction(taskId: string, userId: string): Promise<FormState> {
+  const chef = await requireChef()
+  try {
+    await removeParticipant(db, chef, taskId, userId)
+  } catch (error) {
+    return toFormError(error)
+  }
+  revalidatePath(`/cap/${taskId}`)
+  return { success: 'Participant retiré de la tâche.' }
+}
+
+/** Un chef revient sur une validation : les points sont repris au grand livre. */
+export async function cancelValidationAction(taskId: string): Promise<FormState> {
+  const chef = await requireChef()
+  try {
+    await cancelValidation(db, chef, taskId)
+  } catch (error) {
+    return toFormError(error)
+  }
+  revalidatePath(`/cap/${taskId}`)
+  revalidatePath('/cap')
+  return { success: 'Validation annulée, les points ont été repris.' }
 }

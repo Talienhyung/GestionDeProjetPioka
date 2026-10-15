@@ -81,9 +81,10 @@ export async function decideApplication(db: PrismaClient, actor: Actor, input: D
   return db.$transaction(async (tx) => {
     const role = await tx.projectRole.findUnique({
       where: { id: input.projectRoleId },
-      include: { applications: true },
+      include: { applications: true, project: true },
     })
     if (!role) throw new NotFoundError('Rôle')
+    if (role.project.status === 'ARCHIVE') throw new ValidationError('Ce CAP est archivé.')
     if (input.accept && role.holderId) throw new ValidationError('Ce rôle est déjà tenu.')
 
     if (!input.accept) {
@@ -132,15 +133,23 @@ export async function decideApplication(db: PrismaClient, actor: Actor, input: D
 export async function closeRole(db: PrismaClient, actor: Actor, projectRoleId: string) {
   if (!isChef(actor)) throw new ForbiddenError()
 
-  const role = await db.projectRole.findUnique({ where: { id: projectRoleId } })
+  const role = await db.projectRole.findUnique({ where: { id: projectRoleId }, include: { project: true } })
   if (!role) throw new NotFoundError('Rôle')
+  if (role.project.status === 'ARCHIVE') throw new ValidationError('Ce CAP est archivé.')
   if (role.closedAt) throw new ValidationError('Ce rôle est déjà clôturé.')
   if (!role.holderId) throw new ValidationError('Ce rôle n\'a pas de titulaire.')
 
   const holderId = role.holderId
 
   await db.$transaction(async (tx) => {
-    await tx.projectRole.update({ where: { id: role.id }, data: { closedAt: new Date() } })
+    // Clôture conditionnelle : deux appels simultanés ne peuvent pas verser
+    // les points deux fois, le second ne touche aucune ligne.
+    const verrou = await tx.projectRole.updateMany({
+      where: { id: role.id, closedAt: null },
+      data: { closedAt: new Date() },
+    })
+    if (verrou.count === 0) throw new ValidationError('Ce rôle est déjà clôturé.')
+
     if (role.points > 0) {
       await creditPoints(tx, {
         userId: holderId,

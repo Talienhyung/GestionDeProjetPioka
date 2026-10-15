@@ -104,4 +104,23 @@ describe('tâches', () => {
     expect(board.AGIR.map((task) => task.title)).toEqual(['B'])
     expect(board.PARTAGER).toEqual([])
   })
+
+  it('refuse une phase ou une difficulté hors nomenclature', async () => {
+    await expect(
+      createTask(t.prisma, chef, { projectId, title: 'Bidon', phase: 'FOO' as never, difficulty: 'MOYEN' }),
+    ).rejects.toThrow(/phase/i)
+
+    await expect(
+      createTask(t.prisma, chef, { projectId, title: 'Bidon', phase: 'AGIR', difficulty: 'ENORME' as never }),
+    ).rejects.toThrow(/difficult/i)
+  })
+
+  it('ne casse pas le tableau si une phase inconnue traîne en base', async () => {
+    await t.prisma.task.create({
+      data: { projectId, title: 'Vieille tâche', phase: 'FOO', difficulty: 'MOYEN', status: 'OUVERTE', createdById: chef.id },
+    })
+
+    const board = await listBoard(t.prisma, projectId)
+    expect(Object.keys(board)).toEqual(['CHOISIR', 'AGIR', 'PARTAGER'])
+  })
 })

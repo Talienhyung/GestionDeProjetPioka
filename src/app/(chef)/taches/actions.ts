@@ -7,7 +7,7 @@ import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
 import type { Difficulty, Phase } from '@/lib/domain/types'
 import { getActiveProject } from '@/lib/services/projectService'
-import { createTask } from '@/lib/services/taskService'
+import { assertDifficulty, assertPhase, createTask } from '@/lib/services/taskService'
 import { NotFoundError, ValidationError } from '@/lib/services/errors'
 
 /** Un chef crée une tâche ouverte ; un jeune crée une proposition. Même action. */
@@ -63,15 +63,20 @@ export async function saveAsTemplateAction(_prev: FormState, formData: FormData)
   const title = String(formData.get('title') ?? '').trim()
   if (!title) return toFormError(new ValidationError('Le titre est obligatoire.'))
 
-  await db.taskTemplate.create({
-    data: {
-      title,
-      description: String(formData.get('description') ?? ''),
-      phase: String(formData.get('phase') ?? 'AGIR'),
-      difficulty: String(formData.get('difficulty') ?? 'MOYEN'),
-      isBuiltin: false,
-    },
-  })
+  try {
+    await db.taskTemplate.create({
+      data: {
+        title,
+        description: String(formData.get('description') ?? ''),
+        // Validées ici aussi : un modèle alimente ensuite des tâches réelles.
+        phase: assertPhase(String(formData.get('phase') ?? 'AGIR')),
+        difficulty: assertDifficulty(String(formData.get('difficulty') ?? 'MOYEN')),
+        isBuiltin: false,
+      },
+    })
+  } catch (error) {
+    return toFormError(error)
+  }
 
   revalidatePath('/taches')
   return { success: 'Modèle enregistré, tu le retrouveras au prochain CAP.' }

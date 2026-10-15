@@ -35,7 +35,8 @@ export function ReviewCard({ submission, maxBonus, pointsParJeune }: Props) {
         <ul className="mt-3 grid grid-cols-3 gap-2">
           {submission.attachments.map((photo) => (
             <li key={photo.id}>
-              <Image src={`/api/fichiers/${photo.id}`} alt={photo.originalName}
+              {/* unoptimized : voir SubmissionThread, l'optimiseur perd le cookie. */}
+              <Image src={`/api/fichiers/${photo.id}`} alt={photo.originalName} unoptimized
                 width={photo.width} height={photo.height} className="h-24 w-full rounded-lg object-cover" />
             </li>
           ))}

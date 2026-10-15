@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Actor } from '@/lib/domain/types'
 import { getScore } from '@/lib/services/pointsService'
-import { createProject } from '@/lib/services/projectService'
+import { archiveProject, createProject } from '@/lib/services/projectService'
 import { applyToRole, closeRole, createRole, decideApplication, listRoles } from '@/lib/services/roleService'
 import { createTestDb, type TestDb } from '../helpers/db'
 
@@ -116,5 +116,24 @@ describe('rôles du CAP', () => {
     const roles = await listRoles(t.prisma, projectId)
     expect(roles[0].applications.length).toBe(1)
     expect(roles[0].holder).toBeNull()
+  })
+
+  it('refuse d attribuer un rôle sur un CAP archivé', async () => {
+    const role = await roleTresorier()
+    await applyToRole(t.prisma, lucie, role.id)
+    await archiveProject(t.prisma, chef, projectId)
+
+    await expect(decideApplication(t.prisma, chef, { projectRoleId: role.id, userId: lucie.id, accept: true }))
+      .rejects.toThrow(/archiv/i)
+  })
+
+  it('refuse de clôturer un rôle sur un CAP archivé, sans verser de points', async () => {
+    const role = await roleTresorier()
+    await applyToRole(t.prisma, lucie, role.id)
+    await decideApplication(t.prisma, chef, { projectRoleId: role.id, userId: lucie.id, accept: true })
+    await archiveProject(t.prisma, chef, projectId)
+
+    await expect(closeRole(t.prisma, chef, role.id)).rejects.toThrow(/archiv/i)
+    expect(await getScore(t.prisma, lucie.id)).toBe(0)
   })
 })

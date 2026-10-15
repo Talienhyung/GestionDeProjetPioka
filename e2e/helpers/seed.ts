@@ -3,8 +3,9 @@
  * puis les comptes et le CAP du scénario. Toujours reparti de zéro.
  */
 import { execFileSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
+import { mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
+import sharp from 'sharp'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../../src/lib/auth/password'
 
@@ -70,6 +71,12 @@ async function main() {
       },
     ],
   })
+
+  // Photo de test, pour le parcours « je rends mon travail avec une photo ».
+  mkdirSync(join(process.cwd(), 'e2e/fixtures'), { recursive: true })
+  await sharp({ create: { width: 800, height: 600, channels: 3, background: '#2b7a4b' } })
+    .jpeg()
+    .toFile(join(process.cwd(), 'e2e/fixtures/photo.jpg'))
 
   await db.$disconnect()
   console.log('Base e2e prête.')
