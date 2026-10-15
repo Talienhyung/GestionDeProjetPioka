@@ -6,7 +6,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    globalSetup: ['tests/helpers/globalSetup.ts'],
     testTimeout: 30_000,
+    hookTimeout: 30_000,
     // Chaque test d'intégration crée son propre fichier SQLite : Prisma
     // n'apprécie pas les threads partagés.
     pool: 'forks',
