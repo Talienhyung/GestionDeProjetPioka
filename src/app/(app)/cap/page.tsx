@@ -1,8 +1,9 @@
+import { NewTaskForm } from '@/components/NewTaskForm'
 import { PhaseColumn } from '@/components/PhaseColumn'
 import { ProgressBar } from '@/components/ProgressBar'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
-import { PHASES } from '@/lib/domain/types'
+import { PHASES, isChef } from '@/lib/domain/types'
 import { listBoard } from '@/lib/services/taskService'
 import { getActiveProject } from '@/lib/services/projectService'
 import { phaseProgress } from '@/lib/ui/phases'
@@ -27,6 +28,15 @@ export default async function CapPage() {
         </p>
         <ProgressBar percent={global.percent} className="mt-2" />
       </header>
+
+      <details className="rounded-2xl border p-4">
+        <summary className="cursor-pointer font-semibold">
+          {isChef(user) ? 'Ajouter une tâche' : 'Proposer une tâche'}
+        </summary>
+        <div className="mt-3">
+          <NewTaskForm isChef={isChef(user)} />
+        </div>
+      </details>
 
       {PHASES.map((phase) => (
         <PhaseColumn
