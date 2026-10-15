@@ -48,3 +48,6 @@ next-env.d.ts
 .superpowers/
 e2e/e2e.db
 sauvegardes/
+test-results/
+playwright-report/
+e2e/uploads/
