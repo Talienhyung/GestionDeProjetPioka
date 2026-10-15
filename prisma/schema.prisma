@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  displayName        String
+  passwordHash       String
+  role               String
+  mustChangePassword Boolean  @default(true)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  sessions         Session[]
+  assignments      TaskAssignment[]
+  submissions      Submission[]      @relation("SubmissionAuthor")
+  reviews          Submission[]      @relation("SubmissionReviewer")
+  createdTasks     Task[]            @relation("TaskAuthor")
+  rolesHeld        ProjectRole[]
+  roleApplications RoleApplication[]
+  badges           UserBadge[]
+  pointsEntries    PointsEntry[]
+  notifications    Notification[]
+  attachments      Attachment[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  title         String
+  description   String        @default("")
+  currentPhase  String        @default("CHOISIR")
+  status        String        @default("EN_COURS")
+  startedAt     DateTime      @default(now())
+  archivedAt    DateTime?
+  tasks         Task[]
+  roles         ProjectRole[]
+  pointsEntries PointsEntry[]
+  userBadges    UserBadge[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @default("")
+  phase       String
+  difficulty  String
+  status      String
+  createdById String
+  createdBy   User      @relation("TaskAuthor", fields: [createdById], references: [id])
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+
+  assignments   TaskAssignment[]
+  submissions   Submission[]
+  pointsEntries PointsEntry[]
+
+  @@index([projectId, status])
+}
+
+model TaskAssignment {
+  id       String   @id @default(cuid())
+  taskId   String
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+model Submission {
+  id            String       @id @default(cuid())
+  taskId        String
+  task          Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  submittedById String
+  submittedBy   User         @relation("SubmissionAuthor", fields: [submittedById], references: [id])
+  message       String       @default("")
+  createdAt     DateTime     @default(now())
+  decision      String?
+  reviewedById  String?
+  reviewedBy    User?        @relation("SubmissionReviewer", fields: [reviewedById], references: [id])
+  reviewedAt    DateTime?
+  reviewComment String?
+  bonusPoints   Int          @default(0)
+  attachments   Attachment[]
+
+  @@index([taskId])
+}
+
+model Attachment {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  storedName   String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  width        Int
+  height       Int
+  uploadedById String
+  uploadedBy   User       @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime   @default(now())
+}
+
+model ProjectRole {
+  id           String            @id @default(cuid())
+  projectId    String
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name         String
+  description  String            @default("")
+  points       Int
+  holderId     String?
+  holder       User?             @relation(fields: [holderId], references: [id])
+  closedAt     DateTime?
+  applications RoleApplication[]
+}
+
+model RoleApplication {
+  id            String      @id @default(cuid())
+  projectRoleId String
+  projectRole   ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        String      @default("EN_ATTENTE")
+  createdAt     DateTime    @default(now())
+  decidedById   String?
+
+  @@unique([projectRoleId, userId])
+}
+
+model TaskTemplate {
+  id          String  @id @default(cuid())
+  title       String
+  description String  @default("")
+  phase       String
+  difficulty  String
+  isBuiltin   Boolean @default(false)
+  isArchived  Boolean @default(false)
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String
+  icon        String
+  ruleType    String
+  threshold   Int         @default(1)
+  points      Int         @default(0)
+  sortOrder   Int         @default(0)
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model PointsEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  amount        Int
+  reason        String
+  taskId        String?
+  task          Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  projectRoleId String?
+  badgeId       String?
+  submissionId  String?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, submissionId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  message   String
+  link      String    @default("/accueil")
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
