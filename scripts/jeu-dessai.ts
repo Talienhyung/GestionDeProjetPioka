@@ -20,7 +20,7 @@ async function main() {
   await compte('admin', 'Super admin', 'SUPER_ADMIN', 'admin2027')
   const sarah = await compte('sarah', 'Sarah', 'CHEF', 'chef2027')
   const lucie = await compte('lucie', 'Lucie', 'JEUNE', 'jeune2027')
-  await compte('tom', 'Tom', 'JEUNE', 'jeune2027')
+  const tom = await compte('tom', 'Tom', 'JEUNE', 'jeune2027')
   await compte('nina', 'Nina', 'JEUNE', 'jeune2027')
 
   // Les CAP déjà en base deviennent des archives, renommées pour qu'on ne les
@@ -106,6 +106,27 @@ async function main() {
   }
   await db.projectRole.create({
     data: { projectId: solidarite.id, name: 'Responsable collecte', points: 40 },
+  })
+
+  await db.note.deleteMany()
+  await db.note.create({
+    data: {
+      title: 'Matériel à ne pas oublier',
+      body: 'Tentes x4, réchaud, trousse de secours, cordes.\nOn vérifie tout le samedi avant de partir.',
+      pinned: true,
+      authorId: sarah.id,
+    },
+  })
+  await db.note.create({
+    data: { title: 'Covoiturage', body: 'Qui peut emmener du monde depuis la gare ?', authorId: lucie.id },
+  })
+  await db.note.create({
+    data: {
+      projectId: project.id,
+      title: 'Idée de veillée',
+      body: 'Loup-garou géant avec toute la caravane, et déguisements faits maison.',
+      authorId: tom.id,
+    },
   })
 
   console.log('Jeu d’essai prêt.')

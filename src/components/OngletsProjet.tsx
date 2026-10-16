@@ -1,9 +1,10 @@
 import Link from 'next/link'
 
-type Onglet = 'tableau' | 'roles' | 'classement'
+type Onglet = 'tableau' | 'billets' | 'roles' | 'classement'
 
 const ONGLETS: { cle: Onglet; label: string; chemin: string }[] = [
   { cle: 'tableau', label: 'Tableau', chemin: '' },
+  { cle: 'billets', label: 'Billets', chemin: '/billets' },
   { cle: 'roles', label: 'Rôles', chemin: '/roles' },
   { cle: 'classement', label: 'Classement', chemin: '/classement' },
 ]

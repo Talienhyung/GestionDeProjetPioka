@@ -6,6 +6,7 @@ import { TaskCard } from '@/components/TaskCard'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, isChef, type Phase } from '@/lib/domain/types'
+import { listRecentNotes } from '@/lib/services/noteService'
 import { listNotifications } from '@/lib/services/notificationService'
 import { getScore } from '@/lib/services/pointsService'
 import { listLiveProjects } from '@/lib/services/projectService'
@@ -16,7 +17,7 @@ import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
 export default async function AccueilPage() {
   const user = await requireUser()
 
-  const [score, notifications, badges, scale, projets] = await Promise.all([
+  const [score, notifications, badges, scale, projets, billets] = await Promise.all([
     getScore(db, user.id),
     listNotifications(db, user.id, 4),
     db.userBadge.findMany({
@@ -27,6 +28,7 @@ export default async function AccueilPage() {
     }),
     getScale(db),
     listLiveProjects(db),
+    listRecentNotes(db, user, 2),
   ])
 
   // Un CAP par ligne, avec ce qu'il me reste dessus.
@@ -121,6 +123,42 @@ export default async function AccueilPage() {
               points={scale[task.difficulty as keyof typeof scale]}
             />
           ))
+        )}
+      </section>
+
+      <section>
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="panneau text-sm text-encre-douce">Au tableau</h2>
+          <Link href="/tableau" className="text-xs text-accent-encre underline">
+            tout voir
+          </Link>
+        </div>
+
+        {billets.length === 0 ? (
+          <p className="text-sm text-encre-douce">
+            Rien au tableau.{' '}
+            <Link href="/tableau" className="font-bold text-accent-encre underline">
+              Écris le premier billet
+            </Link>
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {billets.map((billet) => (
+              <li key={billet.id}>
+                <Link
+                  href={billet.project ? `/cap/${billet.project.id}/billets` : '/tableau'}
+                  className="block rounded-lg border border-trait bg-carte p-2.5"
+                >
+                  {billet.title ? <span className="panneau-titre text-base">{billet.title}</span> : null}
+                  <span className="line-clamp-2 block text-sm">{billet.body}</span>
+                  <span className="mt-1 block text-xs text-encre-douce">
+                    {billet.author.displayName}
+                    {billet.project ? ` · ${billet.project.title}` : ' · la caravane'}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 

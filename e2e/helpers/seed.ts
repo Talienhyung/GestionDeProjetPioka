@@ -42,6 +42,7 @@ async function main() {
   const sarah = await compte('sarah', 'Sarah', 'CHEF', 'chef-mdp-2027', false)
   await compte('lucie', 'Lucie', 'JEUNE', 'motdepasse-initial', true)
   await compte('tom', 'Tom', 'JEUNE', 'motdepasse-initial', false)
+  await compte('nina', 'Nina', 'JEUNE', 'motdepasse-initial', false)
 
   // Un seul CAP en cours : celui du scénario.
   await db.project.updateMany({ data: { status: 'ARCHIVE', archivedAt: new Date() } })

@@ -28,6 +28,7 @@ model User {
   pointsEntries    PointsEntry[]
   notifications    Notification[]
   attachments      Attachment[]
+  notes            Note[]
 }
 
 model Session {
@@ -52,6 +53,7 @@ model Project {
   roles         ProjectRole[]
   pointsEntries PointsEntry[]
   userBadges    UserBadge[]
+  notes         Note[]
 }
 
 model Task {
@@ -213,6 +215,22 @@ model Notification {
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+}
+
+/// Un billet du tableau. projectId vide = tableau de la caravane.
+model Note {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String   @default("")
+  body      String
+  pinned    Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, pinned, updatedAt])
 }
 
 model Setting {

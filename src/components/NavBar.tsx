@@ -24,6 +24,7 @@ export function NavBar({ isChef, unread }: Props) {
   const entrees: Entree[] = [
     { href: '/accueil', label: 'Accueil', icone: 'maison' },
     { href: '/cap', label: 'Nos CAP', icone: 'boussole' },
+    { href: '/tableau', label: 'Tableau', icone: 'fanion' },
     ...(isChef ? [{ href: '/validation', label: 'Valider', icone: 'coche' as NomIcone }] : []),
     { href: '/profil', label: 'Profil', icone: 'personne' },
   ]
