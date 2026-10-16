@@ -9,6 +9,9 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   workers: 1,
+  // Le serveur de développement compile chaque route à sa première visite :
+  // le parcours complet en traverse une demi-douzaine.
+  timeout: 60_000,
   use: { baseURL: 'http://localhost:3100', locale: 'fr-FR' },
   projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
   webServer: {

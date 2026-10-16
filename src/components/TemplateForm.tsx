@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { saveAsTemplateAction } from '@/app/(chef)/taches/actions'
+import { saveAsTemplateAction } from '@/app/(app)/cap/[projectId]/taches/actions'
 import { DIFFICULTIES, DIFFICULTY_LABELS, PHASES, PHASE_LABELS } from '@/lib/domain/types'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 

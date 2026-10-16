@@ -4,6 +4,7 @@ import { DIFFICULTY_LABELS } from '@/lib/domain/types'
 import { PHASE_STYLES, STATUS_LABELS, difficultyMarks } from '@/lib/ui/phases'
 
 interface Props {
+  projectId: string
   task: {
     id: string
     title: string
@@ -17,7 +18,7 @@ interface Props {
   points?: number
 }
 
-export function TaskCard({ task, currentUserId, points }: Props) {
+export function TaskCard({ projectId, task, currentUserId, points }: Props) {
   const style = PHASE_STYLES[task.phase as Phase]
   const difficulty = task.difficulty as Difficulty
   const status = task.status as TaskStatus
@@ -26,7 +27,7 @@ export function TaskCard({ task, currentUserId, points }: Props) {
 
   return (
     <Link
-      href={`/cap/${task.id}`}
+      href={`/cap/${projectId}/tache/${task.id}`}
       className="flex overflow-hidden rounded-lg border border-trait bg-carte transition-colors hover:border-encre-douce"
 
     >

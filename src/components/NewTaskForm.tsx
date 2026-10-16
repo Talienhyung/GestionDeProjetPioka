@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { createTaskAction } from '@/app/(chef)/taches/actions'
+import { createTaskAction } from '@/app/(app)/cap/[projectId]/taches/actions'
 import { DIFFICULTY_LABELS, DIFFICULTIES, PHASES, PHASE_LABELS } from '@/lib/domain/types'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 
@@ -9,11 +9,12 @@ import { EMPTY_FORM_STATE } from '@/lib/formState'
  * Même formulaire pour tous : un chef crée une tâche ouverte, un jeune
  * envoie une proposition. C'est l'action serveur qui tranche, selon le rôle.
  */
-export function NewTaskForm({ isChef }: { isChef: boolean }) {
+export function NewTaskForm({ isChef, projectId }: { isChef: boolean; projectId: string }) {
   const [state, action, pending] = useActionState(createTaskAction, EMPTY_FORM_STATE)
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-trait p-4">
+      <input type="hidden" name="projectId" value={projectId} />
       <input name="title" required placeholder="Titre de la tâche" className="rounded-lg border border-trait p-3" />
       <textarea name="description" rows={3} placeholder="Description (facultatif)" className="rounded-lg border border-trait p-3" />
 

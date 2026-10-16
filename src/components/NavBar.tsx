@@ -20,13 +20,11 @@ interface Entree {
  * paramètres, archives) est regroupé sur la page Profil.
  */
 export function NavBar({ isChef, unread }: Props) {
+  // Rôles et classement appartiennent à un CAP : on y accède depuis sa page.
   const entrees: Entree[] = [
     { href: '/accueil', label: 'Accueil', icone: 'maison' },
-    { href: '/cap', label: 'Le CAP', icone: 'boussole' },
-    ...(isChef
-      ? [{ href: '/validation', label: 'Valider', icone: 'coche' as NomIcone }]
-      : [{ href: '/classement', label: 'Classement', icone: 'trophee' as NomIcone }]),
-    { href: '/roles', label: 'Rôles', icone: 'ecusson' },
+    { href: '/cap', label: 'Nos CAP', icone: 'boussole' },
+    ...(isChef ? [{ href: '/validation', label: 'Valider', icone: 'coche' as NomIcone }] : []),
     { href: '/profil', label: 'Profil', icone: 'personne' },
   ]
 

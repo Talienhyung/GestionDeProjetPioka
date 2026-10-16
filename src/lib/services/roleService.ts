@@ -63,7 +63,7 @@ export async function applyToRole(db: Db, actor: Actor, projectRoleId: string) {
   await notifyMany(db, chefs.map((c) => c.id), {
     type: 'CANDIDATURE',
     message: `${actor.displayName} se porte candidat au rôle de ${role.name}`,
-    link: '/roles',
+    link: `/cap/${role.projectId}/roles`,
   })
 
   return application
@@ -95,7 +95,7 @@ export async function decideApplication(db: PrismaClient, actor: Actor, input: D
       await notify(tx, input.userId, {
         type: 'CANDIDATURE_REFUSEE',
         message: `Ta candidature au rôle de ${role.name} n'a pas été retenue.`,
-        link: '/roles',
+        link: `/cap/${role.projectId}/roles`,
       })
       return role
     }
@@ -117,13 +117,13 @@ export async function decideApplication(db: PrismaClient, actor: Actor, input: D
     await notify(tx, input.userId, {
       type: 'ROLE_ATTRIBUE',
       message: `Tu es maintenant ${role.name} du CAP !`,
-      link: '/roles',
+      link: `/cap/${role.projectId}/roles`,
     })
     const recales = role.applications.filter((a) => a.userId !== input.userId && a.status === 'EN_ATTENTE')
     await notifyMany(tx, recales.map((a) => a.userId), {
       type: 'CANDIDATURE_REFUSEE',
       message: `Le rôle de ${role.name} a été confié à quelqu'un d'autre.`,
-      link: '/roles',
+      link: `/cap/${role.projectId}/roles`,
     })
 
     return updated

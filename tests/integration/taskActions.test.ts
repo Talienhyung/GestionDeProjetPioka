@@ -45,7 +45,7 @@ describe('actions sur une tâche', () => {
   }
 
   it('laisse un chef retirer un participant après une soumission', async () => {
-    const { removeParticipantAction } = await import('@/app/(app)/cap/[taskId]/actions')
+    const { removeParticipantAction } = await import('@/app/(app)/cap/[projectId]/tache/[taskId]/actions')
     const { task } = await tacheRendue()
 
     const state = await removeParticipantAction(task.id, lucie.id)
@@ -55,7 +55,7 @@ describe('actions sur une tâche', () => {
   })
 
   it('refuse à un jeune de retirer quelqu un', async () => {
-    const { removeParticipantAction } = await import('@/app/(app)/cap/[taskId]/actions')
+    const { removeParticipantAction } = await import('@/app/(app)/cap/[projectId]/tache/[taskId]/actions')
     const { task } = await tacheRendue()
 
     currentUser = lucie
@@ -63,7 +63,7 @@ describe('actions sur une tâche', () => {
   })
 
   it('laisse un chef annuler une validation et reprend les points', async () => {
-    const { cancelValidationAction } = await import('@/app/(app)/cap/[taskId]/actions')
+    const { cancelValidationAction } = await import('@/app/(app)/cap/[projectId]/tache/[taskId]/actions')
     const { reviewSubmission } = await import('@/lib/services/submissionService')
     const { getScore } = await import('@/lib/services/pointsService')
     const { task, submissionId } = await tacheRendue()
@@ -79,7 +79,7 @@ describe('actions sur une tâche', () => {
   })
 
   it('refuse à un jeune d annuler une validation', async () => {
-    const { cancelValidationAction } = await import('@/app/(app)/cap/[taskId]/actions')
+    const { cancelValidationAction } = await import('@/app/(app)/cap/[projectId]/tache/[taskId]/actions')
     const { task } = await tacheRendue()
 
     currentUser = lucie

@@ -1,4 +1,3 @@
-// src/app/(chef)/pilotage/actions.ts
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -6,51 +5,52 @@ import { requireChef } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
 import type { Phase } from '@/lib/domain/types'
-import { archiveProject, createProject, getActiveProject, setPhase } from '@/lib/services/projectService'
-import { notifyMany } from '@/lib/services/notificationService'
-import { NotFoundError } from '@/lib/services/errors'
+import { archiveProject, createProject, launchProject, setPhase } from '@/lib/services/projectService'
 
-export async function setPhaseAction(phase: Phase): Promise<FormState> {
-  const chef = await requireChef()
-  try {
-    const project = await getActiveProject(db)
-    if (!project) throw new NotFoundError('CAP en cours')
-    await setPhase(db, chef, project.id, phase)
-
-    const jeunes = await db.user.findMany({ where: { role: 'JEUNE', isActive: true }, select: { id: true } })
-    await notifyMany(db, jeunes.map((j) => j.id), {
-      type: 'PHASE',
-      message: `Le CAP passe en phase ${phase.toLowerCase()} !`,
-      link: '/cap',
-    })
-  } catch (error) {
-    return toFormError(error)
-  }
-  revalidatePath('/cap')
+function rafraichir(projectId: string) {
   revalidatePath('/pilotage')
-  return { success: 'Phase mise à jour.' }
+  revalidatePath('/cap', 'layout')
+  revalidatePath(`/cap/${projectId}`)
 }
 
-export async function archiveAction(): Promise<FormState> {
+export async function setPhaseAction(projectId: string, phase: Phase): Promise<FormState> {
   const chef = await requireChef()
   try {
-    const project = await getActiveProject(db)
-    if (!project) throw new NotFoundError('CAP en cours')
-    await archiveProject(db, chef, project.id)
+    await setPhase(db, chef, projectId, phase)
   } catch (error) {
     return toFormError(error)
   }
-  revalidatePath('/cap')
-  revalidatePath('/pilotage')
+  rafraichir(projectId)
+  return { success: 'Étape mise à jour.' }
+}
+
+/** Un brouillon devient visible de toute la caravane. */
+export async function launchAction(projectId: string): Promise<FormState> {
+  const chef = await requireChef()
+  try {
+    await launchProject(db, chef, projectId)
+  } catch (error) {
+    return toFormError(error)
+  }
+  rafraichir(projectId)
+  return { success: 'CAP lancé : les jeunes viennent d’être prévenus.' }
+}
+
+export async function archiveAction(projectId: string): Promise<FormState> {
+  const chef = await requireChef()
+  try {
+    await archiveProject(db, chef, projectId)
+  } catch (error) {
+    return toFormError(error)
+  }
+  rafraichir(projectId)
   return { success: 'CAP archivé. Il reste consultable, mais plus modifiable.' }
 }
 
+/** Crée un brouillon. Les autres CAP continuent leur vie. */
 export async function newProjectAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const chef = await requireChef()
   try {
-    const current = await getActiveProject(db)
-    if (current) await archiveProject(db, chef, current.id)
-
     await createProject(db, chef, {
       title: String(formData.get('title') ?? ''),
       description: String(formData.get('description') ?? ''),
@@ -58,7 +58,7 @@ export async function newProjectAction(_prev: FormState, formData: FormData): Pr
   } catch (error) {
     return toFormError(error)
   }
-  revalidatePath('/cap')
   revalidatePath('/pilotage')
-  return { success: 'Nouveau CAP démarré !' }
+  revalidatePath('/cap', 'layout')
+  return { success: 'Brouillon créé. Garnis-le, puis lance-le quand tu veux.' }
 }

@@ -109,7 +109,7 @@ export async function submitTask(db: PrismaClient, actor: Actor, input: SubmitIn
 export async function reviewSubmission(db: PrismaClient, actor: Actor, input: ReviewInput): Promise<ReviewResult> {
   const scale = await getScale(db)
 
-  const { taskStatus, awarded, projectId, taskTitle, participantIds } = await db.$transaction(async (tx) => {
+  const { taskStatus, awarded, projectId, taskId, taskTitle, participantIds } = await db.$transaction(async (tx) => {
     const submission = await tx.submission.findUnique({
       where: { id: input.submissionId },
       include: { task: { include: { project: true, assignments: true, _count: { select: { submissions: true } } } } },
@@ -179,6 +179,7 @@ export async function reviewSubmission(db: PrismaClient, actor: Actor, input: Re
       taskStatus: status,
       awarded: results,
       projectId: task.projectId,
+      taskId: task.id,
       taskTitle: task.title,
       participantIds: participants,
     }
@@ -190,7 +191,7 @@ export async function reviewSubmission(db: PrismaClient, actor: Actor, input: Re
     message: accepted
       ? `« ${taskTitle} » est validée, bravo !`
       : `« ${taskTitle} » est à corriger : ${input.comment?.trim()}`,
-    link: `/cap/${(await db.submission.findUniqueOrThrow({ where: { id: input.submissionId } })).taskId}`,
+    link: `/cap/${projectId}/tache/${taskId}`,
   })
 
   // Les badges s'évaluent une fois la transaction validée, sur des données à jour.
@@ -206,12 +207,14 @@ export async function reviewSubmission(db: PrismaClient, actor: Actor, input: Re
 
 /** Annule la dernière validation d'une tâche : les points de la tâche sont repris. */
 export async function cancelValidation(db: PrismaClient, actor: Actor, taskId: string): Promise<void> {
+  let projectId = ''
   await db.$transaction(async (tx) => {
     const task = await tx.task.findUnique({
       where: { id: taskId },
       include: { project: true, assignments: true, _count: { select: { submissions: true } } },
     })
     if (!task) throw new NotFoundError('Tâche')
+    projectId = task.projectId
 
     const ctx: TaskContext = {
       status: task.status as TaskStatus,
@@ -248,7 +251,7 @@ export async function cancelValidation(db: PrismaClient, actor: Actor, taskId: s
   await notify(db, actor.id, {
     type: 'VALIDATION_ANNULEE',
     message: 'Validation annulée.',
-    link: `/cap/${taskId}`,
+    link: `/cap/${projectId}/tache/${taskId}`,
   })
 }
 
@@ -259,7 +262,12 @@ export async function listPendingSubmissions(db: PrismaClient) {
     include: {
       submittedBy: { select: { displayName: true } },
       attachments: true,
-      task: { include: { assignments: { include: { user: { select: { displayName: true } } } } } },
+      task: {
+        include: {
+          project: { select: { id: true, title: true } },
+          assignments: { include: { user: { select: { displayName: true } } } },
+        },
+      },
     },
   })
 }

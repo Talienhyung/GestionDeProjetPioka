@@ -5,80 +5,145 @@ import { ProgressBar } from '@/components/ProgressBar'
 import { requireChef } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, type Phase } from '@/lib/domain/types'
-import { getActiveProject, listProjects } from '@/lib/services/projectService'
+import { listProjects } from '@/lib/services/projectService'
 import { listBoard } from '@/lib/services/taskService'
 import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
-import { archiveAction, setPhaseAction } from './actions'
+import { archiveAction, launchAction, setPhaseAction } from './actions'
 
 export default async function PilotagePage() {
   await requireChef()
-  const [project, projets] = await Promise.all([getActiveProject(db), listProjects(db)])
-  const board = project ? await listBoard(db, project.id) : null
-  const progress = board ? phaseProgress(PHASES.flatMap((phase) => board[phase])) : null
-  const archives = projets.filter((autre) => autre.status === 'ARCHIVE')
+  const projets = await listProjects(db)
+
+  const avancements = Object.fromEntries(
+    await Promise.all(
+      projets.map(async (projet) => {
+        const board = await listBoard(db, projet.id)
+        return [projet.id, phaseProgress(PHASES.flatMap((phase) => board[phase]))] as const
+      }),
+    ),
+  )
+
+  const parEtat = {
+    BROUILLON: projets.filter((projet) => projet.status === 'BROUILLON'),
+    EN_COURS: projets.filter((projet) => projet.status === 'EN_COURS'),
+    ARCHIVE: projets.filter((projet) => projet.status === 'ARCHIVE'),
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="panneau-titre text-3xl">Pilotage du CAP</h1>
-
-      {project ? (
-        <section className="rounded-xl border border-trait p-4">
-          <h2 className="panneau-titre text-lg">{project.title}</h2>
-          {progress ? (
-            <>
-              <p className="mt-1 text-sm text-encre-douce">{progress.done} tâches terminées sur {progress.total}</p>
-              <ProgressBar percent={progress.percent} className="mt-2" />
-            </>
-          ) : null}
-
-          <h3 className="mt-4 font-semibold">Phase en cours</h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {PHASES.map((phase) => {
-              const style = PHASE_STYLES[phase as Phase]
-              const courante = project.currentPhase === phase
-              return (
-                <ActionButton
-                  key={phase}
-                  action={setPhaseAction.bind(null, phase)}
-                  className={`panneau rounded-lg border border-trait px-4 py-2 text-sm ${style.soft} ${style.ink} ${
-                    courante ? style.border : 'border-transparent'
-                  }`}
-                >
-                  {style.label}{courante ? ' ✓' : ''}
-                </ActionButton>
-              )
-            })}
-          </div>
-
-          <div className="mt-4">
-            <ActionButton
-              action={archiveAction}
-              className="rounded-lg border border-trait px-4 py-2 text-sm"
-              confirm="Archiver ce CAP ? Il deviendra consultable mais plus modifiable."
-            >
-              Archiver ce CAP
-            </ActionButton>
-          </div>
-        </section>
-      ) : (
-        <p className="text-sm text-encre-douce">Aucun CAP en cours.</p>
-      )}
+      <h1 className="panneau-titre text-3xl">Pilotage des CAP</h1>
 
       <section>
-        <h2 className="panneau-titre mb-2 text-lg">Démarrer un nouveau CAP</h2>
-        <NewProjectForm archiveraLeCourant={project !== null} />
+        <h2 className="panneau mb-2 text-sm text-encre-douce">En cours ({parEtat.EN_COURS.length})</h2>
+        {parEtat.EN_COURS.length === 0 ? (
+          <p className="text-sm text-encre-douce">Aucun CAP lancé pour l’instant.</p>
+        ) : null}
+
+        <div className="flex flex-col gap-3">
+          {parEtat.EN_COURS.map((projet) => (
+            <article key={projet.id} className="rounded-xl border border-trait bg-carte p-4">
+              <Link href={`/cap/${projet.id}`} className="panneau-titre text-lg underline">
+                {projet.title}
+              </Link>
+              <p className="mt-1 text-xs tabular-nums text-encre-douce">
+                {avancements[projet.id].done} tâches terminées sur {avancements[projet.id].total}
+              </p>
+              <ProgressBar percent={avancements[projet.id].percent} className="mt-2" />
+
+              <h3 className="panneau mt-4 text-xs text-encre-douce">Étape en cours</h3>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {PHASES.map((phase) => {
+                  const style = PHASE_STYLES[phase as Phase]
+                  const courante = projet.currentPhase === phase
+                  return (
+                    <ActionButton
+                      key={phase}
+                      action={setPhaseAction.bind(null, projet.id, phase)}
+                      className={`panneau rounded-lg border px-3 py-1.5 text-xs ${style.soft} ${style.ink} ${
+                        courante ? style.border : 'border-transparent'
+                      }`}
+                    >
+                      {style.label}
+                      {courante ? ' ✓' : ''}
+                    </ActionButton>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/cap/${projet.id}/taches`}
+                  className="panneau rounded-lg border border-trait px-3 py-1.5 text-xs"
+                >
+                  Ajouter des tâches
+                </Link>
+                <ActionButton
+                  action={archiveAction.bind(null, projet.id)}
+                  className="rounded-lg border border-trait px-3 py-1.5 text-xs"
+                  confirm="Archiver ce CAP ? Il deviendra consultable mais plus modifiable."
+                >
+                  Archiver
+                </ActionButton>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
-      {archives.length > 0 ? (
+      <section>
+        <h2 className="panneau mb-2 text-sm text-encre-douce">
+          Brouillons ({parEtat.BROUILLON.length}) · invisibles des jeunes
+        </h2>
+
+        <div className="flex flex-col gap-3">
+          {parEtat.BROUILLON.map((projet) => (
+            <article key={projet.id} className="rounded-xl border border-dashed border-trait p-4">
+              <Link href={`/cap/${projet.id}`} className="panneau-titre text-lg underline">
+                {projet.title}
+              </Link>
+              <p className="mt-1 text-xs text-encre-douce">
+                {avancements[projet.id].total} tâche(s) préparée(s)
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={`/cap/${projet.id}/taches`}
+                  className="panneau rounded-lg border border-trait px-3 py-1.5 text-xs"
+                >
+                  Garnir
+                </Link>
+                <ActionButton
+                  action={launchAction.bind(null, projet.id)}
+                  className="panneau rounded-lg bg-bouton px-4 py-1.5 text-xs text-sur-bouton"
+                  confirm="Lancer ce CAP ? Les jeunes le verront et seront prévenus."
+                >
+                  Lancer le CAP
+                </ActionButton>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-3">
+          <details className="rounded-xl border border-trait bg-carte px-3 py-2">
+            <summary className="panneau cursor-pointer text-sm">Nouveau brouillon</summary>
+            <div className="mt-3">
+              <NewProjectForm />
+            </div>
+          </details>
+        </div>
+      </section>
+
+      {parEtat.ARCHIVE.length > 0 ? (
         <section>
-          <h2 className="panneau-titre mb-2 text-lg">CAP archivés</h2>
+          <h2 className="panneau mb-2 text-sm text-encre-douce">Archivés ({parEtat.ARCHIVE.length})</h2>
           <ul className="flex flex-col gap-2">
-            {archives.map((archive) => (
-              <li key={archive.id}>
-                <Link href={`/archives/${archive.id}`} className="block rounded-xl border border-trait p-3 text-sm">
-                  <strong>{archive.title}</strong>
-                  <span className="block text-encre-douce">
-                    archivé le {archive.archivedAt?.toLocaleDateString('fr-FR')}
+            {parEtat.ARCHIVE.map((projet) => (
+              <li key={projet.id}>
+                <Link href={`/cap/${projet.id}`} className="block rounded-lg border border-trait p-3 text-sm">
+                  <span className="panneau-titre text-base">{projet.title}</span>
+                  <span className="block text-xs text-encre-douce">
+                    archivé le {projet.archivedAt?.toLocaleDateString('fr-FR')}
                   </span>
                 </Link>
               </li>

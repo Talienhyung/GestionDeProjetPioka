@@ -6,14 +6,25 @@ import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { canPerform } from '@/lib/domain/tasks'
 import { DIFFICULTY_LABELS, isChef, type Difficulty, type Phase, type TaskStatus } from '@/lib/domain/types'
+import { notFound } from 'next/navigation'
+import { getVisibleProject } from '@/lib/services/projectService'
 import { getTaskDetail } from '@/lib/services/taskService'
 import { PHASE_STYLES, STATUS_LABELS, difficultyMarks } from '@/lib/ui/phases'
 import { cancelValidationAction, joinAction, leaveAction, removeParticipantAction } from './actions'
 
-export default async function TaskPage({ params }: { params: Promise<{ taskId: string }> }) {
+export default async function TaskPage({
+  params,
+}: {
+  params: Promise<{ projectId: string; taskId: string }>
+}) {
   const user = await requireUser()
-  const { taskId } = await params
+  const { projectId, taskId } = await params
+
+  // Le projet de l'adresse doit être visible de cet acteur, et la tâche lui
+  // appartenir : sinon un brouillon fuirait par le lien d'une de ses tâches.
+  await getVisibleProject(db, user, projectId)
   const task = await getTaskDetail(db, taskId)
+  if (task.projectId !== projectId) notFound()
 
   const ctx = {
     status: task.status as TaskStatus,

@@ -1,16 +1,17 @@
 'use client'
 
 import { useActionState } from 'react'
-import { createRoleAction } from '@/app/(app)/roles/actions'
+import { createRoleAction } from '@/app/(app)/cap/[projectId]/roles/actions'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 
 const SUGGESTIONS = ['Trésorier', 'Intendant', 'Responsable communication', 'Responsable matériel', 'Secrétaire']
 
-export function RoleForm() {
+export function RoleForm({ projectId }: { projectId: string }) {
   const [state, action, pending] = useActionState(createRoleAction, EMPTY_FORM_STATE)
 
   return (
     <form action={action} className="flex flex-col gap-3">
+      <input type="hidden" name="projectId" value={projectId} />
       <input name="name" required list="roles-suggeres" placeholder="Nom du rôle" className="rounded-lg border border-trait p-3" />
       <datalist id="roles-suggeres">
         {SUGGESTIONS.map((nom) => <option key={nom} value={nom} />)}

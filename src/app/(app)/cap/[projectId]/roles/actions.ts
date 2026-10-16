@@ -6,21 +6,22 @@ import { requireChef, requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
 import { NotFoundError } from '@/lib/services/errors'
-import { getActiveProject } from '@/lib/services/projectService'
+import { getVisibleProject } from '@/lib/services/projectService'
 import { applyToRole, closeRole, createRole, decideApplication } from '@/lib/services/roleService'
 
-export async function applyAction(projectRoleId: string): Promise<FormState> {
+export async function applyAction(projectId: string, projectRoleId: string): Promise<FormState> {
   const user = await requireUser()
   try {
     await applyToRole(db, user, projectRoleId)
   } catch (error) {
     return toFormError(error)
   }
-  revalidatePath('/roles')
+  revalidatePath(`/cap/${projectId}/roles`)
   return { success: 'Candidature envoyée aux chefs.' }
 }
 
 export async function decideApplicationAction(
+  projectId: string,
   projectRoleId: string,
   userId: string,
   accept: boolean,
@@ -31,15 +32,15 @@ export async function decideApplicationAction(
   } catch (error) {
     return toFormError(error)
   }
-  revalidatePath('/roles')
+  revalidatePath(`/cap/${projectId}/roles`)
   return { success: accept ? 'Rôle attribué.' : 'Candidature écartée.' }
 }
 
-export async function closeRoleAction(projectRoleId: string): Promise<FormState> {
+export async function closeRoleAction(projectId: string, projectRoleId: string): Promise<FormState> {
   const chef = await requireChef()
   try {
     const result = await closeRole(db, chef, projectRoleId)
-    revalidatePath('/roles')
+    revalidatePath(`/cap/${projectId}/roles`)
     return { success: `Rôle clôturé : ${result.awarded} points versés.` }
   } catch (error) {
     return toFormError(error)
@@ -48,9 +49,9 @@ export async function closeRoleAction(projectRoleId: string): Promise<FormState>
 
 export async function createRoleAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const chef = await requireChef()
+  const projectId = String(formData.get('projectId') ?? '')
   try {
-    const project = await getActiveProject(db)
-    if (!project) throw new NotFoundError('CAP en cours')
+    const project = await getVisibleProject(db, chef, projectId)
 
     await createRole(db, chef, {
       projectId: project.id,
@@ -61,6 +62,6 @@ export async function createRoleAction(_prev: FormState, formData: FormData): Pr
   } catch (error) {
     return toFormError(error)
   }
-  revalidatePath('/roles')
+  revalidatePath(`/cap/${projectId}/roles`)
   return { success: 'Rôle créé.' }
 }

@@ -46,7 +46,17 @@ async function main() {
   // Un seul CAP en cours : celui du scénario.
   await db.project.updateMany({ data: { status: 'ARCHIVE', archivedAt: new Date() } })
   const project = await db.project.create({
-    data: { title: "Camp d'été 2027", description: 'Le CAP de la caravane', currentPhase: 'AGIR' },
+    data: {
+      title: "Camp d'été 2027",
+      description: 'Le CAP de la caravane',
+      currentPhase: 'AGIR',
+      status: 'EN_COURS',
+    },
+  })
+
+  // Un brouillon, que les jeunes ne doivent pas voir.
+  await db.project.create({
+    data: { title: 'Week-end de Toussaint', status: 'BROUILLON', currentPhase: 'CHOISIR' },
   })
 
   await db.task.createMany({

@@ -1,6 +1,16 @@
 // e2e/parcours-cap.spec.ts
 import { expect, test } from '@playwright/test'
 
+/** Va de la liste des CAP jusqu'à une tâche : deux pas, comme un jeune. */
+async function ouvrirTache(page: import('@playwright/test').Page, titre: RegExp) {
+  await page.getByRole('link', { name: 'Nos CAP' }).click()
+  await page.waitForURL(/\/cap$/)
+  await page.getByRole('link', { name: /Camp d’été 2027|Camp d'été 2027/ }).first().click()
+  await page.waitForURL(/\/cap\/[^/]+$/)
+  await page.getByRole('link', { name: titre }).first().click()
+  await page.waitForURL(/\/tache\//)
+}
+
 async function seConnecter(page: import('@playwright/test').Page, username: string, password: string) {
   await page.goto('/login')
   await page.getByLabel('Identifiant').fill(username)
@@ -13,9 +23,7 @@ async function seConnecter(page: import('@playwright/test').Page, username: stri
 test('inscription, soumission, refus, correction, validation et points', async ({ page }) => {
   // Le jeune prend une tâche et la rend.
   await seConnecter(page, 'tom', 'motdepasse-initial')
-  await page.getByRole('link', { name: 'Le CAP' }).click()
-  await page.waitForURL(/\/cap$/)
-  await page.getByRole('link', { name: /Établir le budget prévisionnel/ }).first().click()
+  await ouvrirTache(page, /Établir le budget prévisionnel/)
   await page.getByRole('button', { name: "Je m'inscris" }).click()
   await expect(page.getByText('Tom')).toBeVisible()
 
@@ -42,9 +50,7 @@ test('inscription, soumission, refus, correction, validation et points', async (
 
   // Le jeune corrige et resoumet.
   await seConnecter(page, 'tom', 'motdepasse-initial')
-  await page.getByRole('link', { name: 'Le CAP' }).click()
-  await page.waitForURL(/\/cap$/)
-  await page.getByRole('link', { name: /Établir le budget prévisionnel/ }).first().click()
+  await ouvrirTache(page, /Établir le budget prévisionnel/)
   await expect(page.getByText('Il manque les recettes.')).toBeVisible()
   await page.getByPlaceholder('Raconte ce que tu as fait').fill('Recettes ajoutées.')
   await page.getByRole('button', { name: 'Soumettre aux chefs' }).click()
@@ -65,6 +71,15 @@ test('inscription, soumission, refus, correction, validation et points', async (
   await expect(page.getByText('75 points')).toBeVisible()
   // « Premier pas » apparaît aussi dans les notifications : on vise la vitrine.
   await expect(page.getByText('Premier pas').first()).toBeVisible()
+})
+
+test('un jeune ne voit pas les CAP en brouillon', async ({ page }) => {
+  await seConnecter(page, 'tom', 'motdepasse-initial')
+  await page.getByRole('link', { name: 'Nos CAP' }).click()
+  await page.waitForURL(/\/cap$/)
+
+  await expect(page.getByText('Week-end de Toussaint')).toHaveCount(0)
+  await expect(page.getByText(/Camp d.été 2027/)).toBeVisible()
 })
 
 test('un jeune ne voit pas la file de validation', async ({ page }) => {

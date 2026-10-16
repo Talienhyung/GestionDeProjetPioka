@@ -6,7 +6,7 @@ import { requireChef, requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
 import type { Difficulty, Phase } from '@/lib/domain/types'
-import { getActiveProject } from '@/lib/services/projectService'
+import { getVisibleProject } from '@/lib/services/projectService'
 import { assertDifficulty, assertPhase, createTask } from '@/lib/services/taskService'
 import { NotFoundError, ValidationError } from '@/lib/services/errors'
 
@@ -14,8 +14,7 @@ import { NotFoundError, ValidationError } from '@/lib/services/errors'
 export async function createTaskAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireUser()
   try {
-    const project = await getActiveProject(db)
-    if (!project) throw new NotFoundError('CAP en cours')
+    const project = await getVisibleProject(db, user, String(formData.get('projectId') ?? ''))
 
     await createTask(db, user, {
       projectId: project.id,
@@ -28,20 +27,19 @@ export async function createTaskAction(_prev: FormState, formData: FormData): Pr
     return toFormError(error)
   }
 
-  revalidatePath('/cap')
+  revalidatePath('/cap', 'layout')
   revalidatePath('/taches')
   return { success: 'Tâche enregistrée.' }
 }
 
-export async function createFromTemplateAction(templateId: string): Promise<FormState> {
+export async function createFromTemplateAction(projectId: string, templateId: string): Promise<FormState> {
   const chef = await requireChef()
   try {
     const [template, project] = await Promise.all([
       db.taskTemplate.findUnique({ where: { id: templateId } }),
-      getActiveProject(db),
+      getVisibleProject(db, chef, projectId),
     ])
     if (!template) throw new NotFoundError('Modèle')
-    if (!project) throw new NotFoundError('CAP en cours')
 
     await createTask(db, chef, {
       projectId: project.id,
@@ -54,7 +52,7 @@ export async function createFromTemplateAction(templateId: string): Promise<Form
     return toFormError(error)
   }
 
-  revalidatePath('/cap')
+  revalidatePath('/cap', 'layout')
   return { success: 'Tâche ajoutée au CAP.' }
 }
 

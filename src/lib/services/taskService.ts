@@ -70,6 +70,10 @@ export async function createTask(db: Db, actor: Actor, input: CreateTaskInput) {
   const project = await db.project.findUnique({ where: { id: input.projectId } })
   if (!project) throw new NotFoundError('CAP')
   if (project.status === 'ARCHIVE') throw new ValidationError('Ce CAP est archivé, on ne peut plus y ajouter de tâche.')
+  // Un chef garnit son brouillon avant de le lancer ; un jeune n'y a pas accès.
+  if (project.status === 'BROUILLON' && !isChef(actor)) {
+    throw new ValidationError('Ce CAP n’est pas encore lancé.')
+  }
 
   const status: TaskStatus = isChef(actor) ? 'OUVERTE' : 'PROPOSEE'
 
@@ -92,12 +96,12 @@ export async function createTask(db: Db, actor: Actor, input: CreateTaskInput) {
       message: `${actor.displayName} propose la tâche « ${task.title} »`,
       link: '/validation',
     })
-  } else {
+  } else if (project.status === 'EN_COURS') {
     const jeunes = await db.user.findMany({ where: { role: 'JEUNE', isActive: true }, select: { id: true } })
     await notifyMany(db, jeunes.map((j) => j.id), {
       type: 'NOUVELLE_TACHE',
       message: `Nouvelle tâche à prendre : « ${task.title} »`,
-      link: `/cap/${task.id}`,
+      link: `/cap/${project.id}/tache/${task.id}`,
     })
   }
 

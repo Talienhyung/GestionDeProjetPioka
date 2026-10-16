@@ -32,10 +32,12 @@ describe('actions des rôles', () => {
   afterEach(async () => { await t.cleanup() })
 
   it('candidature puis attribution, bout en bout', async () => {
-    const { applyAction, createRoleAction, decideApplicationAction } = await import('@/app/(app)/roles/actions')
+    const { applyAction, createRoleAction, decideApplicationAction } = await import('@/app/(app)/cap/[projectId]/roles/actions')
 
     currentUser = chef
+    const projet = await t.prisma.project.findFirstOrThrow()
     const form = new FormData()
+    form.set('projectId', projet.id)
     form.set('name', 'Trésorier')
     form.set('points', '60')
     expect((await createRoleAction({}, form)).success).toBeTruthy()
@@ -43,25 +45,27 @@ describe('actions des rôles', () => {
     const role = await t.prisma.projectRole.findFirstOrThrow()
 
     currentUser = lucie
-    expect((await applyAction(role.id)).success).toMatch(/Candidature/)
+    expect((await applyAction(role.projectId, role.id)).success).toMatch(/Candidature/)
 
     currentUser = chef
-    expect((await decideApplicationAction(role.id, lucie.id, true)).success).toMatch(/attribué/)
+    expect((await decideApplicationAction(role.projectId, role.id, lucie.id, true)).success).toMatch(/attribué/)
     expect((await t.prisma.projectRole.findUniqueOrThrow({ where: { id: role.id } })).holderId).toBe(lucie.id)
   })
 
   it('rend un message d erreur sur une double candidature', async () => {
-    const { applyAction, createRoleAction } = await import('@/app/(app)/roles/actions')
+    const { applyAction, createRoleAction } = await import('@/app/(app)/cap/[projectId]/roles/actions')
 
     currentUser = chef
+    const projet = await t.prisma.project.findFirstOrThrow()
     const form = new FormData()
+    form.set('projectId', projet.id)
     form.set('name', 'Intendant')
     form.set('points', '40')
     await createRoleAction({}, form)
     const role = await t.prisma.projectRole.findFirstOrThrow()
 
     currentUser = lucie
-    await applyAction(role.id)
-    expect((await applyAction(role.id)).error).toMatch(/déjà/)
+    await applyAction(role.projectId, role.id)
+    expect((await applyAction(role.projectId, role.id)).error).toMatch(/déjà/)
   })
 })

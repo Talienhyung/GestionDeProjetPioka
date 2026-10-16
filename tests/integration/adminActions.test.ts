@@ -64,16 +64,33 @@ describe('actions d administration', () => {
     expect((await setScaleAction({}, form)).error).toMatch(/supérieur à zéro/)
   })
 
-  it('démarre un nouveau CAP en archivant le précédent', async () => {
+  it('crée un brouillon sans toucher aux CAP déjà en cours', async () => {
     const { newProjectAction } = await import('@/app/(chef)/pilotage/actions')
     currentUser = chef
-    await t.prisma.project.create({ data: { title: 'CAP 2026' } })
+    await t.prisma.project.create({ data: { title: 'CAP 2026', status: 'EN_COURS' } })
 
     const form = new FormData()
     form.set('title', 'CAP 2027')
-    expect((await newProjectAction({}, form)).success).toMatch(/démarré/)
+    expect((await newProjectAction({}, form)).success).toMatch(/brouillon/i)
 
     const projets = await t.prisma.project.findMany({ orderBy: { startedAt: 'asc' } })
-    expect(projets.map((p) => p.status)).toEqual(['ARCHIVE', 'EN_COURS'])
+    expect(projets.map((projet) => [projet.title, projet.status])).toEqual([
+      ['CAP 2026', 'EN_COURS'],
+      ['CAP 2027', 'BROUILLON'],
+    ])
+  })
+
+  it('lance un brouillon, et les deux CAP tournent alors ensemble', async () => {
+    const { launchAction, newProjectAction } = await import('@/app/(chef)/pilotage/actions')
+    currentUser = chef
+    await t.prisma.project.create({ data: { title: 'CAP 2026', status: 'EN_COURS' } })
+
+    const form = new FormData()
+    form.set('title', 'CAP 2027')
+    await newProjectAction({}, form)
+    const brouillon = await t.prisma.project.findFirstOrThrow({ where: { title: 'CAP 2027' } })
+
+    expect((await launchAction(brouillon.id)).success).toMatch(/lancé/i)
+    expect(await t.prisma.project.count({ where: { status: 'EN_COURS' } })).toBe(2)
   })
 })

@@ -2,7 +2,7 @@
 import { beforeEach, afterEach, describe, expect, it } from 'vitest'
 import { TaskTransitionError } from '@/lib/domain/tasks'
 import type { Actor } from '@/lib/domain/types'
-import { archiveProject, createProject } from '@/lib/services/projectService'
+import { archiveProject, createProject, launchProject } from '@/lib/services/projectService'
 import { createTask, decideProposal, joinTask, leaveTask, listBoard, removeParticipant } from '@/lib/services/taskService'
 import { createTestDb, type TestDb } from '../helpers/db'
 
@@ -23,6 +23,7 @@ describe('tâches', () => {
     lucie = await mk('lucie', 'JEUNE')
     tom = await mk('tom', 'JEUNE')
     projectId = (await createProject(t.prisma, chef, { title: 'Camp 2027' })).id
+    await launchProject(t.prisma, chef, projectId)
   })
   afterEach(async () => { await t.cleanup() })
 

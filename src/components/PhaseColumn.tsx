@@ -4,6 +4,7 @@ import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
 
 interface Props {
   phase: Phase
+  projectId: string
   tasks: Parameters<typeof TaskCard>[0]['task'][]
   currentUserId: string
   isCurrentPhase: boolean
@@ -16,7 +17,7 @@ interface Props {
  * bandeau et la bande de gauche portent la couleur, ce qui tient aussi
  * bien en thème sombre qu'en clair.
  */
-export function PhaseColumn({ phase, tasks, currentUserId, isCurrentPhase, points }: Props) {
+export function PhaseColumn({ phase, projectId, tasks, currentUserId, isCurrentPhase, points }: Props) {
   const style = PHASE_STYLES[phase]
   const progress = phaseProgress(tasks)
 
@@ -46,6 +47,7 @@ export function PhaseColumn({ phase, tasks, currentUserId, isCurrentPhase, point
           tasks.map((task) => (
             <TaskCard
               key={task.id}
+              projectId={projectId}
               task={task}
               currentUserId={currentUserId}
               points={points[task.difficulty]}

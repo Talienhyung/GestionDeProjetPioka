@@ -2,15 +2,15 @@ import Link from 'next/link'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { getLeaderboard } from '@/lib/services/pointsService'
-import { getActiveProject } from '@/lib/services/projectService'
+import { OngletsProjet } from '@/components/OngletsProjet'
+import { getVisibleProject } from '@/lib/services/projectService'
 
 const MEDAILLES = ['🥇', '🥈', '🥉']
 
-export default async function ClassementPage() {
+export default async function ClassementPage({ params }: { params: Promise<{ projectId: string }> }) {
   const user = await requireUser()
-  const project = await getActiveProject(db)
-  if (!project) return <p>Aucun CAP en cours.</p>
-
+  const { projectId } = await params
+  const project = await getVisibleProject(db, user, projectId)
   const classement = await getLeaderboard(db, project.id)
 
   return (
@@ -18,10 +18,11 @@ export default async function ClassementPage() {
       <header>
         <h1 className="panneau-titre text-3xl">Classement</h1>
         <p className="text-sm text-encre-douce">{project.title}</p>
-        <Link href="/archives" className="text-sm underline">
-          Voir les CAP précédents
+        <Link href="/cap" className="text-sm underline">
+          Voir les autres CAP
         </Link>
       </header>
+      <OngletsProjet projectId={project.id} actif="classement" />
 
       {classement.length === 0 ? (
         <p className="text-sm text-encre-douce">Aucun jeune inscrit pour l&apos;instant.</p>

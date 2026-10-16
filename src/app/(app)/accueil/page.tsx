@@ -1,22 +1,22 @@
 import Link from 'next/link'
-import { Icone } from '@/components/Icone'
 import { Celebration } from '@/components/Celebration'
-import { Itineraire } from '@/components/Itineraire'
+import { Icone } from '@/components/Icone'
+import { ProgressBar } from '@/components/ProgressBar'
 import { TaskCard } from '@/components/TaskCard'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, isChef, type Phase } from '@/lib/domain/types'
 import { listNotifications } from '@/lib/services/notificationService'
-import { getLeaderboard, getScore } from '@/lib/services/pointsService'
-import { getActiveProject } from '@/lib/services/projectService'
+import { getScore } from '@/lib/services/pointsService'
+import { listLiveProjects } from '@/lib/services/projectService'
 import { getScale } from '@/lib/services/settingsService'
 import { listBoard } from '@/lib/services/taskService'
+import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
 
 export default async function AccueilPage() {
   const user = await requireUser()
-  const project = await getActiveProject(db)
 
-  const [score, notifications, badges, scale] = await Promise.all([
+  const [score, notifications, badges, scale, projets] = await Promise.all([
     getScore(db, user.id),
     listNotifications(db, user.id, 4),
     db.userBadge.findMany({
@@ -26,18 +26,25 @@ export default async function AccueilPage() {
       take: 6,
     }),
     getScale(db),
+    listLiveProjects(db),
   ])
 
-  const board = project ? await listBoard(db, project.id) : null
-  const classement = project ? await getLeaderboard(db, project.id) : []
-  const rang = classement.findIndex((ligne) => ligne.userId === user.id) + 1
+  // Un CAP par ligne, avec ce qu'il me reste dessus.
+  const caps = await Promise.all(
+    projets.map(async (projet) => {
+      const board = await listBoard(db, projet.id)
+      const taches = PHASES.flatMap((phase) => board[phase])
+      return {
+        projet,
+        avancement: phaseProgress(taches),
+        miennes: taches.filter(
+          (task) => task.assignments.some((a) => a.user.id === user.id) && task.status !== 'TERMINEE',
+        ),
+      }
+    }),
+  )
 
-  const mesTaches = board
-    ? PHASES.flatMap((phase) => board[phase]).filter(
-        (task) => task.assignments.some((a) => a.user.id === user.id) && task.status !== 'TERMINEE',
-      )
-    : []
-
+  const mesTaches = caps.flatMap((cap) => cap.miennes.map((task) => ({ task, projectId: cap.projet.id })))
   const fete = notifications.find((n) => !n.readAt && ['TACHE_VALIDEE', 'BADGE'].includes(n.type))
 
   return (
@@ -45,29 +52,55 @@ export default async function AccueilPage() {
       <Celebration trigger={fete?.id ?? null} />
 
       <header className="courbes overflow-hidden rounded-xl bg-bandeau px-4 py-4 text-sur-bandeau">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="panneau text-xs opacity-90">Salut {user.displayName}</p>
-            {/* Un seul élément : un lecteur d'écran annonce « 75 points ». */}
-            <p className="panneau text-5xl leading-none tabular-nums">
-              {score}{' '}
-              <span className="block text-xs opacity-90">points</span>
-            </p>
-          </div>
-
-          {rang > 0 && !isChef(user) ? (
-            <p className="panneau text-right text-sm leading-tight opacity-90">
-              {rang}
-              <sup>{rang === 1 ? 'er' : 'e'}</sup>
-              <span className="block text-xs">de la caravane</span>
-            </p>
-          ) : null}
-        </div>
-
-        {project ? <p className="mt-3 text-sm opacity-90">{project.title}</p> : null}
+        <p className="panneau text-xs opacity-90">Salut {user.displayName}</p>
+        <p className="panneau text-5xl leading-none tabular-nums">
+          {score}{' '}
+          <span className="block text-xs opacity-90">points en tout</span>
+        </p>
       </header>
 
-      {board && project ? <Itineraire board={board} phaseCourante={project.currentPhase as Phase} /> : null}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between">
+          <h2 className="panneau text-sm text-encre-douce">
+            {caps.length > 1 ? 'Nos CAP en cours' : 'Notre CAP'}
+          </h2>
+          <Link href="/cap" className="text-xs text-accent-encre underline">
+            tout voir
+          </Link>
+        </div>
+
+        {caps.length === 0 ? (
+          <p className="text-sm text-encre-douce">
+            Aucun CAP lancé pour l’instant{isChef(user) ? ' : prépare-en un depuis le pilotage.' : '.'}
+          </p>
+        ) : (
+          caps.map(({ projet, avancement, miennes }) => {
+            const style = PHASE_STYLES[projet.currentPhase as Phase]
+            return (
+              <Link
+                key={projet.id}
+                href={`/cap/${projet.id}`}
+                className="flex overflow-hidden rounded-lg border border-trait bg-carte hover:border-encre-douce"
+              >
+                <span aria-hidden className={`w-1.5 shrink-0 ${style.rail}`} />
+                <span className="flex-1 p-3">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="panneau-titre text-lg">{projet.title}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-encre-douce">
+                      {avancement.done}/{avancement.total}
+                    </span>
+                  </span>
+                  <span className={`panneau mt-0.5 block text-[11px] ${style.ink}`}>
+                    étape : {style.label}
+                    {miennes.length > 0 ? ` · ${miennes.length} tâche(s) à toi` : ''}
+                  </span>
+                  <ProgressBar percent={avancement.percent} className="mt-2" />
+                </span>
+              </Link>
+            )
+          })
+        )}
+      </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="panneau text-sm text-encre-douce">Mes tâches en cours</h2>
@@ -79,8 +112,14 @@ export default async function AccueilPage() {
             </Link>
           </p>
         ) : (
-          mesTaches.map((task) => (
-            <TaskCard key={task.id} task={task} currentUserId={user.id} points={scale[task.difficulty as keyof typeof scale]} />
+          mesTaches.map(({ task, projectId }) => (
+            <TaskCard
+              key={task.id}
+              projectId={projectId}
+              task={task}
+              currentUserId={user.id}
+              points={scale[task.difficulty as keyof typeof scale]}
+            />
           ))
         )}
       </section>
@@ -118,9 +157,7 @@ export default async function AccueilPage() {
         </div>
 
         <ul className="flex flex-col gap-1.5">
-          {notifications.length === 0 ? (
-            <li className="text-sm text-encre-douce">Rien de neuf.</li>
-          ) : null}
+          {notifications.length === 0 ? <li className="text-sm text-encre-douce">Rien de neuf.</li> : null}
           {notifications.map((n) => (
             <li key={n.id}>
               <Link

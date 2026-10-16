@@ -3,27 +3,31 @@ import { RoleForm } from '@/components/RoleForm'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { isChef } from '@/lib/domain/types'
-import { getActiveProject } from '@/lib/services/projectService'
+import { OngletsProjet } from '@/components/OngletsProjet'
+import { getVisibleProject } from '@/lib/services/projectService'
 import { listRoles } from '@/lib/services/roleService'
 import { applyAction, closeRoleAction, decideApplicationAction } from './actions'
 
-export default async function RolesPage() {
+export default async function RolesPage({ params }: { params: Promise<{ projectId: string }> }) {
   const user = await requireUser()
-  const project = await getActiveProject(db)
-  if (!project) return <p>Aucun CAP en cours.</p>
-
+  const { projectId } = await params
+  const project = await getVisibleProject(db, user, projectId)
   const roles = await listRoles(db, project.id)
   const chef = isChef(user)
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="panneau-titre text-3xl">Les rôles du CAP</h1>
+      <header>
+        <h1 className="panneau-titre text-3xl">Les rôles</h1>
+        <p className="text-sm text-encre-douce">{project.title}</p>
+      </header>
+      <OngletsProjet projectId={project.id} actif="roles" />
 
       {chef ? (
         <details className="rounded-xl border border-trait p-4">
           <summary className="cursor-pointer font-semibold">Créer un rôle</summary>
           <div className="mt-3">
-            <RoleForm />
+            <RoleForm projectId={project.id} />
           </div>
         </details>
       ) : null}
@@ -47,7 +51,7 @@ export default async function RolesPage() {
           {!role.holder && !chef ? (
             <div className="mt-3">
               <ActionButton
-                action={applyAction.bind(null, role.id)}
+                action={applyAction.bind(null, project.id, role.id)}
                 className="panneau rounded-lg bg-bouton px-4 py-2 text-sur-bouton"
               >
                 Je me porte candidat
@@ -62,13 +66,13 @@ export default async function RolesPage() {
                   <span className="text-sm">{application.user.displayName}</span>
                   <span className="flex gap-2">
                     <ActionButton
-                      action={decideApplicationAction.bind(null, role.id, application.user.id, true)}
+                      action={decideApplicationAction.bind(null, project.id, role.id, application.user.id, true)}
                       className="panneau rounded bg-bouton px-3 py-1 text-sm text-sur-bouton"
                     >
                       Attribuer
                     </ActionButton>
                     <ActionButton
-                      action={decideApplicationAction.bind(null, role.id, application.user.id, false)}
+                      action={decideApplicationAction.bind(null, project.id, role.id, application.user.id, false)}
                       className="rounded border border-trait px-3 py-1 text-sm"
                     >
                       Écarter
@@ -82,7 +86,7 @@ export default async function RolesPage() {
           {chef && role.holder && !role.closedAt ? (
             <div className="mt-3">
               <ActionButton
-                action={closeRoleAction.bind(null, role.id)}
+                action={closeRoleAction.bind(null, project.id, role.id)}
                 className="rounded-lg border border-trait px-4 py-2 text-sm"
                 confirm="Clôturer ce rôle et verser les points à son titulaire ?"
               >

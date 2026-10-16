@@ -12,7 +12,13 @@ export default async function ValidationPage() {
   await requireChef()
   const [submissions, propositions, scale] = await Promise.all([
     listPendingSubmissions(db),
-    db.task.findMany({ where: { status: 'PROPOSEE' }, include: { createdBy: { select: { displayName: true } } } }),
+    db.task.findMany({
+      where: { status: 'PROPOSEE' },
+      include: {
+        createdBy: { select: { displayName: true } },
+        project: { select: { id: true, title: true } },
+      },
+    }),
     getScale(db),
   ])
 
@@ -42,7 +48,8 @@ export default async function ValidationPage() {
         {propositions.length === 0 ? <p className="text-sm text-encre-douce">Aucune proposition en attente.</p> : null}
         {propositions.map((task) => (
           <article key={task.id} className="rounded-xl border border-trait p-4">
-            <p className="font-semibold">{task.title}</p>
+            <p className="panneau text-[11px] text-encre-douce">{task.project.title}</p>
+            <p className="panneau-titre text-lg">{task.title}</p>
             <p className="text-sm text-encre-douce">Proposée par {task.createdBy.displayName}</p>
             {task.description ? <p className="mt-2 text-sm">{task.description}</p> : null}
             <div className="mt-3 flex gap-2">

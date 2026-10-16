@@ -11,7 +11,12 @@ interface Props {
     message: string
     submittedBy: { displayName: string }
     attachments: { id: string; originalName: string; width: number; height: number }[]
-    task: { title: string; difficulty: string; assignments: { user: { displayName: string } }[] }
+    task: {
+      title: string
+      difficulty: string
+      project: { id: string; title: string }
+      assignments: { user: { displayName: string } }[]
+    }
   }
   maxBonus: number
   pointsParJeune: number
@@ -22,7 +27,8 @@ export function ReviewCard({ submission, maxBonus, pointsParJeune }: Props) {
 
   return (
     <article className="rounded-xl border border-trait bg-carte p-4 shadow-sm">
-      <h3 className="font-bold">{submission.task.title}</h3>
+      <p className="panneau text-[11px] text-encre-douce">{submission.task.project.title}</p>
+      <h3 className="panneau-titre text-lg">{submission.task.title}</h3>
       <p className="text-sm text-encre-douce">
         Rendu par {submission.submittedBy.displayName} ·{' '}
         {submission.task.assignments.map((a) => a.user.displayName).join(', ')} ·{' '}
