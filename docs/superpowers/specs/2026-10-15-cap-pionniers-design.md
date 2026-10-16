@@ -25,6 +25,7 @@ démarche de projet visible et ludique.
 2. Un chef traite sa file de validation en quelques minutes depuis son téléphone.
 3. Les jeunes reviennent sur le site d'eux-mêmes entre deux réunions.
 4. Le chef peut archiver un CAP et en démarrer un nouveau l'année suivante sans perdre l'historique.
+5. La caravane peut mener plusieurs CAP de front, et un chef peut en préparer d'autres à l'abri des regards.
 
 ### Non-objectifs
 
@@ -36,7 +37,7 @@ ni un outil de gestion budgétaire.
 | Contrainte | Décision |
 |---|---|
 | Hébergement | Serveur auto-géré par le chef, via Docker |
-| Périmètre | Une seule caravane, plusieurs CAP (en cours + archivés) |
+| Périmètre | Une seule caravane, plusieurs CAP : brouillons, plusieurs en cours **en parallèle**, archivés |
 | Stack | TypeScript, Next.js 15 (App Router), React, Prisma, SQLite, Tailwind |
 | Usage | Mobile-first, interface entièrement en français |
 | Comptes | Aucune inscription publique ; comptes créés par le super admin |
@@ -149,6 +150,28 @@ somme de ses `PointsEntry`. Chaque gain écrit une ligne avec son motif et sa
 source. Conséquences : le jeune peut consulter le détail de son score, une
 validation annulée par erreur s'annule par une ligne négative sans risque de
 désynchronisation, et le classement d'un CAP archivé reste juste pour toujours.
+
+## 4 bis. Cycle de vie d'un CAP
+
+```
+BROUILLON ──(un chef lance)──► EN_COURS ──(un chef archive)──► ARCHIVE
+```
+
+- **Brouillon** : le chef le prépare — titre, tâches, rôles — et les jeunes ne le
+  voient pas. Seul un chef peut y créer des tâches ; une proposition de jeune y
+  est impossible, faute d'y avoir accès.
+- **En cours** : lancé, visible de tous. **Plusieurs CAP peuvent être en cours en
+  même temps** : la caravane mène par exemple son camp d'été et une action de
+  solidarité de front. Tout jeune peut prendre une tâche sur n'importe lequel.
+- **Archivé** : figé, consultable par tous, modifiable par personne.
+
+Démarrer un nouveau CAP n'archive aucun autre : l'archivage est un geste
+explicite du chef.
+
+Le CAP concerné est toujours porté par l'adresse (`/cap/<projet>/…`), jamais par
+un état mémorisé : deux personnes qui ouvrent le même lien voient la même chose,
+et un CAP archivé s'affiche sur la même page que lorsqu'il était vivant, en
+lecture seule.
 
 ## 5. Cycle de vie d'une tâche
 
@@ -313,10 +336,11 @@ candidature à un rôle.
 | Écran | Contenu |
 |---|---|
 | Accueil | mes tâches en cours, mon score et ma progression, mes derniers badges, notifications |
-| Le CAP | tableau des tâches groupées par phase, filtres (libres / les miennes / à corriger) |
+| Mes CAP (`/cap`) | les CAP en cours avec ma progression sur chacun, et les CAP précédents |
+| Un CAP (`/cap/<projet>`) | tableau des tâches groupées par phase, filtres (libres / les miennes / à corriger) |
 | Détail d'une tâche | description, participants, fil des soumissions et commentaires, actions : s'inscrire, se désinscrire, soumettre (message + photos) |
-| Rôles | rôles du CAP, titulaires, candidater |
-| Classement | classement de la caravane, badges de chacun |
+| Rôles (`/cap/<projet>/roles`) | rôles de ce CAP, titulaires, candidater |
+| Classement (`/cap/<projet>/classement`) | classement sur ce CAP, badges de chacun |
 | Profil | mes points en détail, mes badges, changer mon mot de passe |
 
 **Chef** — tout ce qui précède, plus :
@@ -394,6 +418,10 @@ du projet · évaluer ce qu'on a appris.
 6. **Aucune donnée personnelle stockée** — obligations RGPD réduites au minimum.
 7. **Badges en base, pas en dur** — ajustables sans redéploiement.
 8. **Machine à états centralisée** — aucune action ne modifie un statut directement.
+9. **Plusieurs CAP en cours, le projet porté par l'adresse** — la caravane mène
+   plusieurs projets de front ; aucune page ne devine « le » CAP courant, et le
+   classement est propre à chaque projet. Le total de points d'un jeune, lui,
+   reste cumulé tous CAP confondus : c'est son parcours, pas celui d'un projet.
 
 ## 18. Hors périmètre de la v1
 
