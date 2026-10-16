@@ -12,27 +12,27 @@ export default async function ParametresPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Paramètres</h1>
+      <h1 className="panneau-titre text-3xl">Paramètres</h1>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Barème des points</h2>
-        <p className="mb-2 text-sm opacity-70">
+        <h2 className="panneau-titre mb-2 text-lg">Barème des points</h2>
+        <p className="panneau mb-2 text-sm text-encre-douce">
           Les tâches déjà validées gardent les points qu&apos;elles ont rapportés.
         </p>
         <ScaleForm scale={scale} />
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Badges</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Badges</h2>
         <ul className="flex flex-col gap-2">
           {badges.map((badge) => (
-            <li key={badge.id} className="flex items-center gap-3 rounded-xl border p-3 text-sm">
+            <li key={badge.id} className="flex items-center gap-3 rounded-xl border border-trait p-3 text-sm">
               <span className="text-2xl" aria-hidden>{badge.icon}</span>
               <span className="flex-1">
                 <strong>{badge.name}</strong>
-                <span className="block opacity-70">{badge.description}</span>
+                <span className="block text-encre-douce">{badge.description}</span>
               </span>
-              <span className="shrink-0 text-right opacity-70">
+              <span className="shrink-0 text-right text-encre-douce">
                 seuil {badge.threshold}
                 <span className="block">{badge.points} pts</span>
               </span>

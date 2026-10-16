@@ -21,9 +21,9 @@ export function ReviewCard({ submission, maxBonus, pointsParJeune }: Props) {
   const [state, action, pending] = useActionState(reviewAction, EMPTY_FORM_STATE)
 
   return (
-    <article className="rounded-2xl border bg-white p-4 shadow-sm dark:bg-stone-900">
+    <article className="rounded-xl border border-trait bg-carte p-4 shadow-sm">
       <h3 className="font-bold">{submission.task.title}</h3>
-      <p className="text-sm opacity-70">
+      <p className="text-sm text-encre-douce">
         Rendu par {submission.submittedBy.displayName} ·{' '}
         {submission.task.assignments.map((a) => a.user.displayName).join(', ')} ·{' '}
         {pointsParJeune} pts par jeune
@@ -49,22 +49,22 @@ export function ReviewCard({ submission, maxBonus, pointsParJeune }: Props) {
         <label className="text-sm">
           Bonus (0 à {maxBonus} points)
           <input name="bonus" type="number" min={0} max={maxBonus} defaultValue={0}
-            className="mt-1 w-24 rounded-lg border p-2" />
+            className="mt-1 w-24 rounded-lg border border-trait p-2" />
         </label>
 
-        <textarea name="comment" rows={2} className="rounded-lg border p-2"
+        <textarea name="comment" rows={2} className="rounded-lg border border-trait p-2"
           placeholder="Commentaire (obligatoire en cas de refus)" />
 
-        {state.error ? <p role="alert" className="rounded-lg bg-red-100 p-2 text-sm text-red-900">{state.error}</p> : null}
-        {state.success ? <p className="rounded-lg bg-emerald-100 p-2 text-sm text-emerald-900">{state.success}</p> : null}
+        {state.error ? <p role="alert" className="rounded-lg bg-erreur-doux p-2 text-sm text-erreur">{state.error}</p> : null}
+        {state.success ? <p className="rounded-lg bg-ok-doux p-2 text-sm text-ok">{state.success}</p> : null}
 
         <div className="flex gap-2">
           <button name="decision" value="ACCEPTEE" disabled={pending}
-            className="flex-1 rounded-lg bg-emerald-600 p-3 font-semibold text-white disabled:opacity-60">
+            className="flex-1 panneau rounded-lg bg-bouton p-3 text-base text-sur-bouton disabled:opacity-60">
             ✅ Valider
           </button>
           <button name="decision" value="REFUSEE" disabled={pending}
-            className="flex-1 rounded-lg bg-amber-500 p-3 font-semibold text-white disabled:opacity-60">
+            className="flex-1 rounded-lg bg-alerte p-3 text-base text-surface disabled:opacity-60">
             ✏️ À corriger
           </button>
         </div>

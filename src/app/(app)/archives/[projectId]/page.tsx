@@ -27,7 +27,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ projec
           ← Tous les CAP précédents
         </Link>
         <h1 className="mt-2 text-2xl font-bold">{project.title}</h1>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-encre-douce">
           Archivé le {project.archivedAt?.toLocaleDateString('fr-FR')} · {progress.done} tâches terminées
           sur {progress.total}
         </p>
@@ -40,15 +40,16 @@ export default async function ArchivePage({ params }: { params: Promise<{ projec
         if (taches.length === 0) return null
 
         return (
-          <section key={phase} className={`rounded-2xl p-4 ${style.bg} ${style.text}`}>
-            <h2 className="text-lg font-bold">
-              <span aria-hidden>{style.emoji}</span> {style.label}
+          <section key={phase} className="rounded-xl border border-trait bg-carte p-4">
+            <h2 className={`panneau flex items-center gap-2 text-base ${style.ink}`}>
+              <span aria-hidden className={`h-4 w-1.5 rounded-full ${style.rail}`} />
+              {style.label}
             </h2>
             <ul className="mt-2 flex flex-col gap-2">
               {taches.map((task) => (
-                <li key={task.id} className="rounded-xl bg-white/80 p-3 text-sm dark:bg-stone-900/80">
+                <li key={task.id} className="rounded-lg border border-trait p-3 text-sm">
                   <strong>{task.title}</strong>
-                  <span className="block opacity-70">
+                  <span className="block text-encre-douce">
                     {DIFFICULTY_LABELS[task.difficulty as Difficulty]} ·{' '}
                     {STATUS_LABELS[task.status as TaskStatus]}
                     {task.assignments.length > 0
@@ -63,16 +64,16 @@ export default async function ArchivePage({ params }: { params: Promise<{ projec
       })}
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Classement final</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Classement final</h2>
         {classement.length === 0 ? (
-          <p className="text-sm opacity-70">Aucun point sur ce CAP.</p>
+          <p className="text-sm text-encre-douce">Aucun point sur ce CAP.</p>
         ) : (
           <ol className="flex flex-col gap-2">
             {classement.map((ligne, index) => (
               <li
                 key={ligne.userId}
-                className={`flex items-center gap-3 rounded-xl border p-3 ${
-                  ligne.userId === user.id ? 'ring-2 ring-emerald-400' : ''
+                className={`flex items-center gap-3 rounded-xl border border-trait p-3 ${
+                  ligne.userId === user.id ? 'border-accent' : ''
                 }`}
               >
                 <span className="w-6 text-center">{index + 1}</span>

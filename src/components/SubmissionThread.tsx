@@ -20,7 +20,7 @@ export function SubmissionThread({ submissions }: { submissions: Submission[] })
     <section className="flex flex-col gap-3">
       <h3 className="font-bold">Ce qui a été rendu</h3>
       {submissions.map((submission) => (
-        <article key={submission.id} className="rounded-2xl border p-4">
+        <article key={submission.id} className="rounded-xl border border-trait p-4">
           <p className="text-sm">
             <strong>{submission.submittedBy.displayName}</strong> ·{' '}
             {submission.createdAt.toLocaleDateString('fr-FR')}
@@ -50,7 +50,7 @@ export function SubmissionThread({ submissions }: { submissions: Submission[] })
           ) : null}
 
           {submission.decision === 'ACCEPTEE' ? (
-            <p className="mt-3 rounded-lg bg-emerald-100 p-2 text-sm text-emerald-900">
+            <p className="mt-3 rounded-lg bg-ok-doux p-2 text-sm text-ok">
               ✅ Validée par {submission.reviewedBy?.displayName}
               {submission.bonusPoints > 0 ? ` · bonus de ${submission.bonusPoints} points !` : ''}
               {submission.reviewComment ? ` — ${submission.reviewComment}` : ''}
@@ -58,13 +58,13 @@ export function SubmissionThread({ submissions }: { submissions: Submission[] })
           ) : null}
 
           {submission.decision === 'REFUSEE' ? (
-            <p className="mt-3 rounded-lg bg-amber-100 p-2 text-sm text-amber-900">
+            <p className="mt-3 rounded-lg bg-alerte-doux p-2 text-sm text-alerte">
               ✏️ À corriger, dit {submission.reviewedBy?.displayName} : {submission.reviewComment}
             </p>
           ) : null}
 
           {submission.decision === null ? (
-            <p className="mt-3 text-sm opacity-70">⏳ En attente de la réponse d’un chef.</p>
+            <p className="mt-3 text-sm text-encre-douce">⏳ En attente de la réponse d’un chef.</p>
           ) : null}
         </article>
       ))}

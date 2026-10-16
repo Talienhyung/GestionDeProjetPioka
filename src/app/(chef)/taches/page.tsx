@@ -16,16 +16,16 @@ export default async function TachesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Créer des tâches</h1>
+      <h1 className="panneau-titre text-3xl">Créer des tâches</h1>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Nouvelle tâche</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Nouvelle tâche</h2>
         <NewTaskForm isChef />
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Catalogue de tâches types</h2>
-        <p className="mb-3 text-sm opacity-70">Un clic suffit pour l&apos;ajouter au CAP en cours.</p>
+        <h2 className="panneau-titre mb-2 text-lg">Catalogue de tâches types</h2>
+        <p className="mb-3 text-sm text-encre-douce">Un clic suffit pour l&apos;ajouter au CAP en cours.</p>
 
         {PHASES.map((phase) => {
           const style = PHASE_STYLES[phase]
@@ -33,20 +33,21 @@ export default async function TachesPage() {
           if (list.length === 0) return null
 
           return (
-            <div key={phase} className={`mb-3 rounded-2xl p-3 ${style.bg} ${style.text}`}>
-              <h3 className="font-bold">
-                <span aria-hidden>{style.emoji}</span> {PHASE_LABELS[phase as Phase]}
+            <div key={phase} className="mb-3 rounded-xl border border-trait bg-carte p-3">
+              <h3 className={`panneau flex items-center gap-2 text-sm ${style.ink}`}>
+                <span aria-hidden className={`h-4 w-1.5 rounded-full ${style.rail}`} />
+                {PHASE_LABELS[phase as Phase]}
               </h3>
               <ul className="mt-2 flex flex-col gap-2">
                 {list.map((template) => (
-                  <li key={template.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/80 p-2 dark:bg-stone-900/80">
+                  <li key={template.id} className="flex items-center justify-between gap-3 rounded-lg border border-trait p-2">
                     <span className="text-sm">
                       <strong>{template.title}</strong>
-                      <span className="opacity-70"> · {DIFFICULTY_LABELS[template.difficulty as Difficulty]}</span>
+                      <span className="text-encre-douce"> · {DIFFICULTY_LABELS[template.difficulty as Difficulty]}</span>
                     </span>
                     <ActionButton
                       action={createFromTemplateAction.bind(null, template.id)}
-                      className="shrink-0 rounded-lg bg-emerald-600 px-3 py-1 text-sm font-semibold text-white"
+                      className="panneau shrink-0 rounded-lg border border-accent px-3 py-1 text-sm text-accent-encre"
                     >
                       Ajouter
                     </ActionButton>
@@ -59,7 +60,7 @@ export default async function TachesPage() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Ajouter un modèle au catalogue</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Ajouter un modèle au catalogue</h2>
         <TemplateForm />
       </section>
     </div>

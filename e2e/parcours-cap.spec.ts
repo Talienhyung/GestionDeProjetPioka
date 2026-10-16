@@ -62,7 +62,7 @@ test('inscription, soumission, refus, correction, validation et points', async (
   // Le jeune voit ses points et son badge.
   await seConnecter(page, 'tom', 'motdepasse-initial')
   // 50 (difficile, seul) + 10 de bonus + 5 (Premier pas) + 10 (Costaud)
-  await expect(page.getByText('75 pts')).toBeVisible()
+  await expect(page.getByText('75 points')).toBeVisible()
   // « Premier pas » apparaît aussi dans les notifications : on vise la vitrine.
   await expect(page.getByText('Premier pas').first()).toBeVisible()
 })

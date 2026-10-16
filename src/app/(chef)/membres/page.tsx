@@ -11,25 +11,25 @@ export default async function MembresPage() {
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-bold">Les jeunes</h1>
-        <p className="text-sm opacity-70">
+        <h1 className="panneau-titre text-3xl">Les jeunes</h1>
+        <p className="text-sm text-encre-douce">
           Un jeune a oublié son mot de passe ? Génère-lui-en un nouveau, il devra le changer à sa prochaine connexion.
         </p>
       </header>
 
       {membres.length === 0 ? (
-        <p className="text-sm opacity-70">Aucun compte jeune pour l&apos;instant.</p>
+        <p className="text-sm text-encre-douce">Aucun compte jeune pour l&apos;instant.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {membres.map((membre) => (
-            <li key={membre.id} className="flex items-center justify-between gap-3 rounded-xl border p-3">
+            <li key={membre.id} className="flex items-center justify-between gap-3 rounded-xl border border-trait p-3">
               <span className="text-sm">
                 <strong>{membre.displayName}</strong>
-                <span className="block opacity-70">{membre.username}</span>
+                <span className="block text-encre-douce">{membre.username}</span>
               </span>
               <ActionButton
                 action={resetPasswordAction.bind(null, membre.id)}
-                className="shrink-0 rounded-lg border px-3 py-2 text-sm"
+                className="shrink-0 rounded-lg border border-trait px-3 py-2 text-sm"
                 confirm="Générer un nouveau mot de passe ? L'ancien ne marchera plus."
               >
                 Nouveau mot de passe

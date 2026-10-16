@@ -12,7 +12,7 @@ export function BadgeShelf({ badges, earned }: Props) {
         return (
           <li
             key={badge.id}
-            className={`rounded-xl border p-3 text-center ${date ? 'bg-amber-50 dark:bg-amber-950' : 'opacity-50'}`}
+            className={`rounded-xl border border-trait p-3 text-center ${date ? 'bg-alerte-doux' : 'opacity-50'}`}
           >
             <span className="text-3xl" aria-hidden>{badge.icon}</span>
             <p className="mt-1 text-xs font-semibold">{badge.name}</p>

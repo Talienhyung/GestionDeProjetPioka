@@ -12,7 +12,7 @@ export default function LoginPage() {
       <header className="text-center">
         <p className="text-5xl">⛺</p>
         <h1 className="mt-2 text-2xl font-bold">Notre CAP</h1>
-        <p className="text-sm opacity-70">Caravane Pionniers-Caravelles</p>
+        <p className="text-sm text-encre-douce">Caravane Pionniers-Caravelles</p>
       </header>
 
       <form action={action} className="flex flex-col gap-4">
@@ -23,7 +23,7 @@ export default function LoginPage() {
             autoComplete="username"
             autoCapitalize="none"
             required
-            className="rounded-lg border p-3 text-base"
+            className="rounded-lg border border-trait p-3 text-base"
           />
         </label>
 
@@ -34,24 +34,24 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             required
-            className="rounded-lg border p-3 text-base"
+            className="rounded-lg border border-trait p-3 text-base"
           />
         </label>
 
         {state.error ? (
-          <p role="alert" className="rounded-lg bg-red-100 p-3 text-sm text-red-900">{state.error}</p>
+          <p role="alert" className="rounded-lg bg-erreur-doux p-3 text-sm text-erreur">{state.error}</p>
         ) : null}
 
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-emerald-600 p-3 font-semibold text-white disabled:opacity-60"
+          className="panneau rounded-lg bg-bouton p-3 text-base text-sur-bouton disabled:opacity-60"
         >
           {pending ? 'Connexion…' : 'Se connecter'}
         </button>
       </form>
 
-      <p className="text-center text-xs opacity-70">
+      <p className="text-center text-xs text-encre-douce">
         Mot de passe oublié ? Demande à un chef de t’en donner un nouveau.
       </p>
     </main>

@@ -1,9 +1,43 @@
-import type { Phase, TaskStatus } from '@/lib/domain/types'
+import type { Difficulty, Phase, TaskStatus } from '@/lib/domain/types'
 
-export const PHASE_STYLES: Record<Phase, { label: string; emoji: string; bg: string; text: string; ring: string }> = {
-  CHOISIR: { label: 'Choisir', emoji: '💡', bg: 'bg-amber-100', text: 'text-amber-900', ring: 'ring-amber-400' },
-  AGIR: { label: 'Agir', emoji: '🔨', bg: 'bg-sky-100', text: 'text-sky-900', ring: 'ring-sky-400' },
-  PARTAGER: { label: 'Partager', emoji: '🎉', bg: 'bg-fuchsia-100', text: 'text-fuchsia-900', ring: 'ring-fuchsia-400' },
+export interface PhaseStyle {
+  label: string
+  /** Bande de balise, pleine couleur. */
+  rail: string
+  /** Texte sur fond de page ou sur fond doux. */
+  ink: string
+  /** Fond teinté léger, pour un bandeau ou une puce. */
+  soft: string
+  border: string
+}
+
+/**
+ * Une teinte par étape, reprise du balisage de randonnée. Uniquement des
+ * jetons du thème : une classe brute (bg-amber-100) n'aurait pas de
+ * contrepartie en sombre.
+ */
+export const PHASE_STYLES: Record<Phase, PhaseStyle> = {
+  CHOISIR: {
+    label: 'Choisir',
+    rail: 'bg-choisir',
+    ink: 'text-choisir-encre',
+    soft: 'bg-choisir-doux',
+    border: 'border-choisir',
+  },
+  AGIR: {
+    label: 'Agir',
+    rail: 'bg-agir',
+    ink: 'text-agir-encre',
+    soft: 'bg-agir-doux',
+    border: 'border-agir',
+  },
+  PARTAGER: {
+    label: 'Partager',
+    rail: 'bg-partager',
+    ink: 'text-partager-encre',
+    soft: 'bg-partager-doux',
+    border: 'border-partager',
+  },
 }
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -14,6 +48,17 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   SOUMISE: 'En attente de validation',
   A_CORRIGER: 'À corriger',
   TERMINEE: 'Terminée',
+}
+
+/** Difficulté lue d'un coup d'œil, comme la cotation d'un sentier. */
+export const DIFFICULTY_MARKS: Record<Difficulty, string> = {
+  FACILE: '●○○',
+  MOYEN: '●●○',
+  DIFFICILE: '●●●',
+}
+
+export function difficultyMarks(difficulty: Difficulty): string {
+  return DIFFICULTY_MARKS[difficulty]
 }
 
 export function phaseProgress(tasks: { status: string }[]): { done: number; total: number; percent: number } {

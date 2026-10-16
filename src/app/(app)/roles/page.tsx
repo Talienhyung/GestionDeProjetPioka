@@ -17,10 +17,10 @@ export default async function RolesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Les rôles du CAP</h1>
+      <h1 className="panneau-titre text-3xl">Les rôles du CAP</h1>
 
       {chef ? (
-        <details className="rounded-2xl border p-4">
+        <details className="rounded-xl border border-trait p-4">
           <summary className="cursor-pointer font-semibold">Créer un rôle</summary>
           <div className="mt-3">
             <RoleForm />
@@ -28,13 +28,13 @@ export default async function RolesPage() {
         </details>
       ) : null}
 
-      {roles.length === 0 ? <p className="text-sm opacity-70">Aucun rôle défini pour l’instant.</p> : null}
+      {roles.length === 0 ? <p className="text-sm text-encre-douce">Aucun rôle défini pour l’instant.</p> : null}
 
       {roles.map((role) => (
-        <article key={role.id} className="rounded-2xl border bg-white p-4 dark:bg-stone-900">
+        <article key={role.id} className="rounded-xl border border-trait bg-carte p-4">
           <header className="flex items-baseline justify-between">
             <h2 className="font-bold">{role.name}</h2>
-            <span className="text-sm opacity-70">{role.points} pts</span>
+            <span className="text-sm text-encre-douce">{role.points} pts</span>
           </header>
           {role.description ? <p className="mt-1 text-sm">{role.description}</p> : null}
 
@@ -48,7 +48,7 @@ export default async function RolesPage() {
             <div className="mt-3">
               <ActionButton
                 action={applyAction.bind(null, role.id)}
-                className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+                className="panneau rounded-lg bg-bouton px-4 py-2 text-sur-bouton"
               >
                 Je me porte candidat
               </ActionButton>
@@ -58,18 +58,18 @@ export default async function RolesPage() {
           {chef && role.applications.length > 0 ? (
             <ul className="mt-3 flex flex-col gap-2">
               {role.applications.map((application) => (
-                <li key={application.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-100 p-2 dark:bg-stone-800">
+                <li key={application.id} className="flex items-center justify-between gap-2 rounded-lg border border-trait bg-carte p-2">
                   <span className="text-sm">{application.user.displayName}</span>
                   <span className="flex gap-2">
                     <ActionButton
                       action={decideApplicationAction.bind(null, role.id, application.user.id, true)}
-                      className="rounded bg-emerald-600 px-3 py-1 text-sm text-white"
+                      className="panneau rounded bg-bouton px-3 py-1 text-sm text-sur-bouton"
                     >
                       Attribuer
                     </ActionButton>
                     <ActionButton
                       action={decideApplicationAction.bind(null, role.id, application.user.id, false)}
-                      className="rounded border px-3 py-1 text-sm"
+                      className="rounded border border-trait px-3 py-1 text-sm"
                     >
                       Écarter
                     </ActionButton>
@@ -83,7 +83,7 @@ export default async function RolesPage() {
             <div className="mt-3">
               <ActionButton
                 action={closeRoleAction.bind(null, role.id)}
-                className="rounded-lg border px-4 py-2 text-sm"
+                className="rounded-lg border border-trait px-4 py-2 text-sm"
                 confirm="Clôturer ce rôle et verser les points à son titulaire ?"
               >
                 Clôturer et verser les points

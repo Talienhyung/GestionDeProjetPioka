@@ -11,23 +11,23 @@ export function RoleForm() {
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <input name="name" required list="roles-suggeres" placeholder="Nom du rôle" className="rounded-lg border p-3" />
+      <input name="name" required list="roles-suggeres" placeholder="Nom du rôle" className="rounded-lg border border-trait p-3" />
       <datalist id="roles-suggeres">
         {SUGGESTIONS.map((nom) => <option key={nom} value={nom} />)}
       </datalist>
 
-      <textarea name="description" rows={2} placeholder="Ce que fait ce rôle (facultatif)" className="rounded-lg border p-3" />
+      <textarea name="description" rows={2} placeholder="Ce que fait ce rôle (facultatif)" className="rounded-lg border border-trait p-3" />
 
       <label className="flex items-center gap-2 text-sm">
         Points versés à la clôture
-        <input name="points" type="number" min={0} defaultValue={60} className="w-24 rounded-lg border p-2" />
+        <input name="points" type="number" min={0} defaultValue={60} className="w-24 rounded-lg border border-trait p-2" />
       </label>
 
-      {state.error ? <p role="alert" className="rounded-lg bg-red-100 p-3 text-sm text-red-900">{state.error}</p> : null}
-      {state.success ? <p className="rounded-lg bg-emerald-100 p-3 text-sm text-emerald-900">{state.success}</p> : null}
+      {state.error ? <p role="alert" className="rounded-lg bg-erreur-doux p-3 text-sm text-erreur">{state.error}</p> : null}
+      {state.success ? <p className="rounded-lg bg-ok-doux p-3 text-sm text-ok">{state.success}</p> : null}
 
       <button type="submit" disabled={pending}
-        className="rounded-lg bg-emerald-600 p-3 font-semibold text-white disabled:opacity-60">
+        className="panneau rounded-lg bg-bouton p-3 text-base text-sur-bouton disabled:opacity-60">
         Créer le rôle
       </button>
     </form>

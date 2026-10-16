@@ -35,10 +35,10 @@ export function ActionButton({ action, children, className = '', confirm }: Prop
         {pending ? '…' : children}
       </button>
       {state.error ? (
-        <span role="alert" className="text-xs text-red-700 dark:text-red-400">{state.error}</span>
+        <span role="alert" className="text-xs text-erreur">{state.error}</span>
       ) : null}
       {state.success ? (
-        <span className="text-xs text-emerald-700 dark:text-emerald-400">{state.success}</span>
+        <span className="text-xs text-ok">{state.success}</span>
       ) : null}
     </span>
   )

@@ -7,7 +7,7 @@ import { db } from '@/lib/db'
 import { canPerform } from '@/lib/domain/tasks'
 import { DIFFICULTY_LABELS, isChef, type Difficulty, type Phase, type TaskStatus } from '@/lib/domain/types'
 import { getTaskDetail } from '@/lib/services/taskService'
-import { PHASE_STYLES, STATUS_LABELS } from '@/lib/ui/phases'
+import { PHASE_STYLES, STATUS_LABELS, difficultyMarks } from '@/lib/ui/phases'
 import { cancelValidationAction, joinAction, leaveAction, removeParticipantAction } from './actions'
 
 export default async function TaskPage({ params }: { params: Promise<{ taskId: string }> }) {
@@ -27,24 +27,30 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
 
   return (
     <div className="flex flex-col gap-5">
-      <header className={`rounded-2xl p-4 ${style.bg} ${style.text}`}>
-        <p className="text-sm">{style.emoji} {style.label} · {DIFFICULTY_LABELS[task.difficulty as Difficulty]}</p>
-        <h1 className="mt-1 text-xl font-bold">{task.title}</h1>
-        <p className="mt-1 text-sm">{STATUS_LABELS[task.status as TaskStatus]}</p>
+      <header className={`flex overflow-hidden rounded-xl border border-trait ${style.border} ${style.soft}`}>
+        <span aria-hidden className={`w-2 shrink-0 ${style.rail}`} />
+        <div className="flex-1 p-4">
+          <p className={`panneau text-xs ${style.ink}`}>
+            {style.label} · {difficultyMarks(task.difficulty as Difficulty)}{' '}
+            {DIFFICULTY_LABELS[task.difficulty as Difficulty]}
+          </p>
+          <h1 className="panneau mt-1 text-2xl leading-tight">{task.title}</h1>
+          <p className="mt-1 text-sm text-encre-douce">{STATUS_LABELS[task.status as TaskStatus]}</p>
+        </div>
       </header>
 
       {task.description ? <p className="whitespace-pre-wrap">{task.description}</p> : null}
 
       <section>
-        <h2 className="font-bold">Qui s’en occupe</h2>
+        <h2 className="panneau text-sm text-encre-douce">Qui s’en occupe</h2>
         {task.assignments.length === 0 ? (
-          <p className="text-sm opacity-70">Personne pour l’instant.</p>
+          <p className="text-sm text-encre-douce">Personne pour l’instant.</p>
         ) : (
           <ul className="mt-1 flex flex-wrap gap-2">
             {task.assignments.map((a) => (
               <li
                 key={a.user.id}
-                className="flex items-center gap-2 rounded-full bg-stone-200 px-3 py-1 text-sm dark:bg-stone-800"
+                className="flex items-center gap-2 rounded-full border border-trait bg-carte px-3 py-1 text-sm"
               >
                 {a.user.displayName}
                 {isChef(user) && task.status !== 'TERMINEE' ? (
@@ -66,14 +72,14 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
         {canPerform(ctx, 'S_INSCRIRE') ? (
           <ActionButton
             action={joinAction.bind(null, task.id)}
-            className="rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white"
+            className="panneau rounded-lg bg-bouton px-5 py-3 text-base text-sur-bouton"
           >
             Je m&apos;inscris
           </ActionButton>
         ) : null}
 
         {canPerform(ctx, 'SE_DESINSCRIRE') ? (
-          <ActionButton action={leaveAction.bind(null, task.id)} className="rounded-lg border px-4 py-3">
+          <ActionButton action={leaveAction.bind(null, task.id)} className="rounded-lg border border-trait px-4 py-3 text-sm">
             Me retirer
           </ActionButton>
         ) : null}
@@ -86,7 +92,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
       {isChef(user) && canPerform(ctx, 'ANNULER_VALIDATION') ? (
         <ActionButton
           action={cancelValidationAction.bind(null, task.id)}
-          className="self-start rounded-lg border px-4 py-2 text-sm"
+          className="self-start rounded-lg border border-trait px-4 py-2 text-sm"
           confirm="Annuler la validation ? Les points versés seront repris et la tâche repassera à corriger."
         >
           Annuler la validation

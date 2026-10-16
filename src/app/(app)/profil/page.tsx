@@ -25,30 +25,30 @@ export default async function ProfilPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="rounded-2xl bg-emerald-600 p-5 text-white">
+      <header className="courbes overflow-hidden rounded-xl bg-bandeau p-5 text-sur-bandeau">
         <p className="text-sm opacity-90">{user.displayName}</p>
         <p className="text-4xl font-black">{score} pts</p>
         <p className="mt-1 text-sm">{earned.length} badge(s) sur {badges.length}</p>
       </header>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Mes badges</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Mes badges</h2>
         <BadgeShelf badges={badges} earned={earnedMap} />
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">D&apos;où viennent mes points</h2>
+        <h2 className="panneau-titre mb-2 text-lg">D&apos;où viennent mes points</h2>
         {ledger.length === 0 ? (
-          <p className="text-sm opacity-70">Aucun point pour l&apos;instant.</p>
+          <p className="text-sm text-encre-douce">Aucun point pour l&apos;instant.</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {ledger.map((ligne) => (
-              <li key={ligne.id} className="flex items-baseline justify-between gap-3 rounded-lg border p-2 text-sm">
+              <li key={ligne.id} className="flex items-baseline justify-between gap-3 rounded-lg border border-trait p-2 text-sm">
                 <span>
                   {MOTIFS[ligne.reason] ?? ligne.reason}
-                  {ligne.taskTitle ? <span className="opacity-70"> · {ligne.taskTitle}</span> : null}
+                  {ligne.taskTitle ? <span className="text-encre-douce"> · {ligne.taskTitle}</span> : null}
                 </span>
-                <span className={`font-semibold ${ligne.amount < 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                <span className={`font-semibold ${ligne.amount < 0 ? 'text-erreur' : 'text-ok'}`}>
                   {ligne.amount > 0 ? '+' : ''}{ligne.amount}
                 </span>
               </li>
@@ -57,7 +57,7 @@ export default async function ProfilPage() {
         )}
       </section>
 
-      <Link href="/profil/mot-de-passe" className="rounded-lg border p-3 text-center font-semibold">
+      <Link href="/profil/mot-de-passe" className="rounded-lg border border-trait p-3 text-center font-semibold">
         Changer mon mot de passe
       </Link>
     </div>

@@ -13,26 +13,26 @@ export default async function NotificationsPage() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="panneau-titre text-3xl">Notifications</h1>
         {nonLues > 0 ? (
-          <ActionButton action={markAllReadAction} className="rounded-lg border px-3 py-2 text-sm">
+          <ActionButton action={markAllReadAction} className="rounded-lg border border-trait px-3 py-2 text-sm">
             Tout marquer comme lu
           </ActionButton>
         ) : null}
       </header>
 
       {notifications.length === 0 ? (
-        <p className="text-sm opacity-70">Rien pour l&apos;instant.</p>
+        <p className="text-sm text-encre-douce">Rien pour l&apos;instant.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {notifications.map((notification) => (
             <li
               key={notification.id}
-              className={`rounded-xl border p-3 ${notification.readAt ? 'opacity-60' : 'bg-white font-medium dark:bg-stone-900'}`}
+              className={`rounded-xl border border-trait p-3 ${notification.readAt ? 'text-encre-douce' : 'bg-carte font-bold'}`}
             >
               <Link href={notification.link} className="block">
                 {notification.message}
-                <span className="mt-1 block text-xs opacity-70">
+                <span className="mt-1 block text-xs text-encre-douce">
                   {notification.createdAt.toLocaleDateString('fr-FR', {
                     day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
                   })}

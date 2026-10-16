@@ -9,7 +9,7 @@ export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorrige
   const [state, action, pending] = useActionState(submitAction, EMPTY_FORM_STATE)
 
   return (
-    <form action={action} className="flex flex-col gap-3 rounded-2xl border p-4">
+    <form action={action} className="flex flex-col gap-3 rounded-xl border border-trait p-4">
       <input type="hidden" name="taskId" value={taskId} />
       <h3 className="font-bold">{aCorriger ? 'Renvoyer après correction' : 'J\'ai fini !'}</h3>
 
@@ -17,7 +17,7 @@ export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorrige
         name="message"
         rows={3}
         placeholder="Raconte ce que tu as fait (facultatif)"
-        className="rounded-lg border p-3"
+        className="rounded-lg border border-trait p-3"
       />
 
       <label className="text-sm">
@@ -26,11 +26,11 @@ export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorrige
           className="mt-1 block w-full text-sm" />
       </label>
 
-      {state.error ? <p role="alert" className="rounded-lg bg-red-100 p-3 text-sm text-red-900">{state.error}</p> : null}
-      {state.success ? <p className="rounded-lg bg-emerald-100 p-3 text-sm text-emerald-900">{state.success}</p> : null}
+      {state.error ? <p role="alert" className="rounded-lg bg-erreur-doux p-3 text-sm text-erreur">{state.error}</p> : null}
+      {state.success ? <p className="rounded-lg bg-ok-doux p-3 text-sm text-ok">{state.success}</p> : null}
 
       <button type="submit" disabled={pending}
-        className="rounded-lg bg-emerald-600 p-3 font-semibold text-white disabled:opacity-60">
+        className="panneau rounded-lg bg-bouton p-3 text-base text-sur-bouton disabled:opacity-60">
         {pending ? 'Envoi…' : 'Soumettre aux chefs'}
       </button>
     </form>

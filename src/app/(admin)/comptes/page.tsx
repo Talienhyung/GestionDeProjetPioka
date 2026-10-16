@@ -14,24 +14,24 @@ export default async function ComptesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Les comptes</h1>
+      <h1 className="panneau-titre text-3xl">Les comptes</h1>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Créer un compte</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Créer un compte</h2>
         <CreateUserForm />
       </section>
 
       <section>
-        <h2 className="mb-2 text-lg font-bold">Comptes existants ({membres.length})</h2>
+        <h2 className="panneau-titre mb-2 text-lg">Comptes existants ({membres.length})</h2>
         <ul className="flex flex-col gap-2">
           {membres.map((membre) => (
             <li
               key={membre.id}
-              className={`flex items-center justify-between gap-3 rounded-xl border p-3 ${membre.isActive ? '' : 'opacity-60'}`}
+              className={`flex items-center justify-between gap-3 rounded-xl border border-trait p-3 ${membre.isActive ? '' : 'opacity-60'}`}
             >
               <span className="text-sm">
                 <strong>{membre.displayName}</strong>
-                <span className="block opacity-70">
+                <span className="block text-encre-douce">
                   {membre.username} · {ROLE_LABELS[membre.role as AppRole]}
                   {membre.isActive ? '' : ' · désactivé'}
                   {membre.mustChangePassword ? ' · mot de passe à changer' : ''}
@@ -39,11 +39,11 @@ export default async function ComptesPage() {
               </span>
 
               {membre.id === admin.id ? (
-                <span className="text-xs opacity-70">c&apos;est toi</span>
+                <span className="text-xs text-encre-douce">c&apos;est toi</span>
               ) : (
                 <ActionButton
                   action={setActiveAction.bind(null, membre.id, !membre.isActive)}
-                  className="shrink-0 rounded-lg border px-3 py-2 text-sm"
+                  className="shrink-0 rounded-lg border border-trait px-3 py-2 text-sm"
                   confirm={membre.isActive ? 'Désactiver ce compte ? Ses sessions seront coupées.' : undefined}
                 >
                   {membre.isActive ? 'Désactiver' : 'Réactiver'}
