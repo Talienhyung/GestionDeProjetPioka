@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notre CAP — maquette de fou furieux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800;900&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface:#faf7f2;--carte:#fff;--encre:#231c19;--trait:#e3d9cf;--accent:#ce1b37;
+  --choisir:#f2b705;--agir:#10916f;--partager:#7b55d6;
+  --rayon:22px;--vitesse:1;
+  --panneau:"Barlow Condensed","Arial Narrow",sans-serif;--texte:"Atkinson Hyperlegible",system-ui,sans-serif;
+}
+[data-theme=sombre]{--surface:#15120f;--carte:#221c18;--encre:#f4efe9;--trait:#352c26;--accent:#ff4d64;--agir:#22b68c;--partager:#9b7bf0}
+*{box-sizing:border-box;margin:0}
+body{font-family:var(--texte);background:var(--surface);color:var(--encre);overflow-x:hidden;transition:background .5s,color .5s}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.07;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.35;z-index:-1;animation:flotte calc(18s / var(--vitesse)) ease-in-out infinite alternate}
+.b1{width:420px;height:420px;background:var(--choisir);top:-120px;left:-80px}
+.b2{width:380px;height:380px;background:var(--agir);bottom:-100px;right:-60px;animation-delay:-6s}
+.b3{width:300px;height:300px;background:var(--partager);top:40%;left:45%;animation-delay:-12s}
+@keyframes flotte{to{transform:translate(120px,80px) scale(1.25) rotate(40deg)}}
+#curseur{position:fixed;width:28px;height:28px;border:2px solid var(--accent);border-radius:50%;pointer-events:none;z-index:200;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s}
+#curseur.gros{width:60px;height:60px;background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:1rem;padding:.8rem 1.5rem;
+ backdrop-filter:blur(14px);background:color-mix(in srgb,var(--surface) 70%,transparent);border-bottom:1px solid var(--trait)}
+.logo{font-family:var(--panneau);font-weight:900;font-size:1.8rem;letter-spacing:.02em;color:var(--accent)}
+.logo span{display:inline-block;animation:saute calc(2s / var(--vitesse)) infinite}
+.logo span:nth-child(2){animation-delay:.1s}.logo span:nth-child(3){animation-delay:.2s}
+@keyframes saute{0%,60%,100%{transform:none}30%{transform:translateY(-6px) rotate(-6deg)}}
+header nav{margin-left:auto;display:flex;gap:.5rem}
+.btn{font:700 .9rem var(--texte);border:2px solid var(--encre);background:var(--carte);color:var(--encre);padding:.5rem 1rem;border-radius:999px;cursor:pointer;box-shadow:3px 3px 0 var(--encre);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--encre)}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0}
+.btn.rouge{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.hero{padding:4rem 1.5rem 2rem;max-width:1200px;margin:auto}
+.hero h1{font-family:var(--panneau);font-weight:900;font-size:clamp(3rem,10vw,8rem);line-height:.85;text-transform:uppercase}
+.hero h1 .mot{display:inline-block;opacity:0;transform:translateY(60px) rotate(8deg);animation:entre .8s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes entre{to{opacity:1;transform:none}}
+.c{color:var(--choisir)}.a{color:var(--agir)}.p{color:var(--partager)}
+.hero p{font-size:1.25rem;max-width:40ch;margin-top:1rem;opacity:.8}
+
+.marquee{overflow:hidden;background:var(--encre);color:var(--surface);padding:.7rem 0;transform:rotate(-1.5deg);margin:2rem -2rem;font-family:var(--panneau);font-weight:800;font-size:1.6rem;text-transform:uppercase}
+.marquee div{display:flex;width:max-content;animation:defile calc(25s / var(--vitesse)) linear infinite}
+.marquee span{padding-right:2.5rem;white-space:nowrap}
+@keyframes defile{to{transform:translateX(-50%)}}
+
+.astuce{max-width:1200px;margin:1rem auto 0;padding:0 1.5rem;opacity:.7;font-size:.9rem}
+#bento{max-width:1200px;margin:1rem auto 4rem;padding:0 1.5rem;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:170px;gap:1rem;grid-auto-flow:dense}
+.tuile{position:relative;background:var(--carte);border:2px solid var(--encre);border-radius:var(--rayon);padding:1.2rem;overflow:hidden;
+ box-shadow:5px 5px 0 var(--encre);cursor:grab;transition:transform .3s cubic-bezier(.2,1.4,.4,1),box-shadow .3s,opacity .5s;
+ opacity:0;translate:0 40px}
+.tuile.vu{opacity:1;translate:0 0;transition:transform .3s cubic-bezier(.2,1.4,.4,1),box-shadow .3s,opacity .5s,translate .7s cubic-bezier(.2,1.4,.4,1)}
+.tuile:hover{box-shadow:9px 9px 0 var(--encre)}
+.tuile.drag{opacity:.35}
+.tuile.cible{outline:4px dashed var(--accent);outline-offset:4px}
+.l2{grid-column:span 2}.h2{grid-row:span 2}
+.tuile h3{font-family:var(--panneau);font-weight:800;font-size:1.5rem;text-transform:uppercase}
+[contenteditable]{cursor:text}
+[contenteditable]:focus{outline:2px dashed var(--accent);border-radius:6px}
+.outils{position:absolute;top:.5rem;right:.5rem;display:flex;gap:.25rem;opacity:0;transition:.2s;z-index:3}
+.tuile:hover .outils{opacity:1}
+.outils button{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--encre);background:var(--surface);color:var(--encre);cursor:pointer;font-size:.8rem}
+.fond-c{background:var(--choisir);color:#231c19}.fond-a{background:var(--agir);color:#fff}.fond-p{background:var(--partager);color:#fff}.fond-r{background:var(--accent);color:#fff}
+.jauge{height:16px;border:2px solid currentColor;border-radius:99px;overflow:hidden;margin:.3rem 0 .7rem}
+.jauge i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--x),var(--x) 10px,color-mix(in srgb,var(--x) 70%,#fff) 10px,color-mix(in srgb,var(--x) 70%,#fff) 20px);
+ background-size:28px 28px;animation:rayures 1s linear infinite;transition:width 1.6s cubic-bezier(.2,1.2,.4,1)}
+@keyframes rayures{to{background-position:28px 0}}
+.gros-chiffre{font-family:var(--panneau);font-weight:900;font-size:4.5rem;line-height:1}
+.badges{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;margin-top:.8rem}
+.badge{aspect-ratio:1;max-height:80px;border-radius:50%;display:grid;place-items:center;font-size:1.7rem;border:2px solid var(--encre);background:var(--surface);transition:transform .5s cubic-bezier(.2,1.6,.4,1)}
+.badge:hover{transform:rotate(360deg) scale(1.15)}
+.badge.verrou{filter:grayscale(1);opacity:.4}
+.tache{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:1.5px solid var(--trait);border-radius:12px;margin-top:.45rem;background:var(--surface);transition:.2s}
+.tache:hover{border-color:var(--encre);transform:translateX(4px)}
+.pastille{width:12px;height:12px;border-radius:50%;flex:none}
+.tache .pts{margin-left:auto;font-weight:700;font-size:.85rem}
+.tache input{accent-color:var(--agir);width:18px;height:18px}
+.tache.fait span{text-decoration:line-through;opacity:.5}
+.podium{display:flex;align-items:flex-end;gap:.5rem;height:75%;margin-top:.5rem}
+.podium div{flex:1;border:2px solid currentColor;border-radius:10px 10px 0 0;display:flex;flex-direction:column;align-items:center;font-weight:700;padding-top:.3rem;background:rgba(255,255,255,.15);transform-origin:bottom;animation:pousse 1s cubic-bezier(.2,1.4,.4,1) backwards}
+@keyframes pousse{from{transform:scaleY(0)}}
+.emoji-geant{font-size:5rem;position:absolute;right:-10px;bottom:-20px;transform:rotate(-15deg);transition:transform .5s cubic-bezier(.2,1.6,.4,1);pointer-events:none}
+.tuile:hover .emoji-geant{transform:rotate(10deg) scale(1.2)}
+
+#panneau{position:fixed;right:1rem;bottom:5.5rem;z-index:60;width:270px;background:var(--carte);border:2px solid var(--encre);border-radius:18px;box-shadow:6px 6px 0 var(--encre);padding:1rem;transform:translateX(calc(100% + 2rem));transition:transform .5s cubic-bezier(.2,1.3,.4,1)}
+#panneau.ouvert{transform:none}
+#panneau h4{font-family:var(--panneau);font-size:1.3rem;text-transform:uppercase;margin-bottom:.5rem}
+#panneau label{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;margin:.35rem 0}
+#panneau input[type=color]{width:38px;height:26px;border:none;background:none;cursor:pointer}
+#bouton-panneau{position:fixed;right:1rem;bottom:1rem;z-index:61;width:58px;height:58px;font-size:1.6rem;padding:0}
+#bouton-panneau span{display:inline-block;animation:tourne calc(6s / var(--vitesse)) linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+canvas#confettis{position:fixed;inset:0;pointer-events:none;z-index:150}
+.toast{position:fixed;left:50%;top:5rem;transform:translate(-50%,-300%);background:var(--encre);color:var(--surface);padding:.8rem 1.4rem;border-radius:99px;font-weight:700;z-index:160;transition:transform .5s cubic-bezier(.2,1.5,.4,1)}
+.toast.vu{transform:translate(-50%,0)}
+/* rôles */
+[data-role=chef] [data-pour=jeune],[data-role=jeune] [data-pour=chef]{display:none}
+.bascule{display:flex;border:2px solid var(--encre);border-radius:999px;overflow:hidden;box-shadow:3px 3px 0 var(--encre)}
+.bascule button{font:700 .85rem var(--texte);border:0;background:var(--carte);color:var(--encre);padding:.45rem .9rem;cursor:pointer;transition:.25s}
+.bascule button.actif{background:var(--encre);color:var(--surface)}
+.pastille-role{font-family:var(--panneau);font-size:1rem;text-transform:uppercase;padding:.15rem .6rem;border-radius:99px;background:var(--choisir);color:#231c19;margin-left:.5rem;vertical-align:middle}
+/* calendrier */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:.6rem;font-size:.8rem;text-align:center}
+.cal b{opacity:.5;font-size:.7rem}
+.cal span{aspect-ratio:1;max-height:42px;display:grid;place-items:center;border-radius:10px;position:relative;transition:.2s;cursor:pointer}
+.cal span:hover{background:var(--trait);transform:scale(1.15)}
+.cal span.ev{color:#fff;font-weight:700;background:var(--ev)}
+.cal span.auj{outline:3px solid var(--accent);animation:pouls calc(1.6s / var(--vitesse)) infinite}
+@keyframes pouls{50%{outline-offset:4px}}
+.cal-info{margin-top:.6rem;font-weight:700;min-height:1.4em}
+/* galerie */
+.galerie{display:flex;gap:.6rem;margin-top:.6rem;height:calc(100% - 2.4rem)}
+.galerie div{flex:1;border-radius:14px;border:2px solid var(--encre);display:grid;place-items:center;font-size:2.4rem;cursor:zoom-in;transition:flex .5s cubic-bezier(.2,1.3,.4,1)}
+.galerie div:hover{flex:2.5}
+#visionneuse{position:fixed;inset:0;z-index:170;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:grid;place-items:center;opacity:0;pointer-events:none;transition:.3s}
+#visionneuse.vu{opacity:1;pointer-events:auto}
+#visionneuse div{width:min(80vw,560px);aspect-ratio:4/3;border-radius:24px;border:3px solid #fff;display:grid;place-items:center;font-size:9rem;transform:scale(.6) rotate(-6deg);transition:transform .5s cubic-bezier(.2,1.5,.4,1);color:#fff;text-align:center}
+#visionneuse.vu div{transform:none}
+#visionneuse small{display:block;font:700 1.2rem var(--texte)}
+/* fil d'activité */
+.fil{margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem;overflow:hidden;height:calc(100% - 2.2rem);mask-image:linear-gradient(#000 75%,transparent)}
+.fil p{font-size:.85rem;padding:.45rem .6rem;border-radius:10px;background:var(--surface);border-left:4px solid var(--c,var(--accent));animation:glisse .6s cubic-bezier(.2,1.4,.4,1)}
+.fil time{opacity:.5;font-size:.75rem;margin-left:.3rem}
+@keyframes glisse{from{opacity:0;transform:translateX(-30px) scale(.9)}}
+/* rendus (chef) */
+.rendu{display:flex;align-items:center;gap:.5rem;padding:.55rem .7rem;border:1.5px solid var(--trait);border-radius:12px;margin-top:.45rem;background:var(--surface);color:var(--encre);transition:.4s}
+.rendu .qui{font-weight:700}
+.rendu .act{margin-left:auto;display:flex;gap:.3rem}
+.rendu button{border:2px solid var(--encre);border-radius:8px;padding:.25rem .55rem;cursor:pointer;font-weight:700;background:var(--carte);color:var(--encre)}
+.rendu .ok{background:var(--agir);color:#fff}
+.rendu.parti{opacity:0;transform:translateX(120%) rotate(6deg);max-height:0;padding:0;margin:0;border:0}
+.vide{text-align:center;opacity:.6;margin-top:2rem;font-size:1.1rem}
+/* secousse */
+@keyframes secoue{20%,60%{transform:translateX(-8px) rotate(-2deg)}40%,80%{transform:translateX(8px) rotate(2deg)}}
+.secoue{animation:secoue .45s}
+@media(max-width:800px){#bento{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.tuile,.hero h1 .mot{opacity:1;transform:none;translate:none}}
+</style>
+</head>
+<body data-role="jeune">
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div id="curseur"></div>
+<canvas id="confettis"></canvas>
+<div class="toast" id="toast"></div>
+
+<header>
+  <div class="logo"><span>C</span><span>A</span><span>P</span> ⚜</div>
+  <nav>
+    <div class="bascule" id="bascule"><button data-r="jeune" class="actif">🧒 Jeune</button><button data-r="chef">🧑‍🏫 Chef</button></div>
+    <button class="btn" id="son" title="Sons">🔊</button>
+    <button class="btn" id="theme">🌙 Thème</button>
+    <button class="btn rouge" id="fete">🎉 Valider !</button>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1 contenteditable>
+    <span class="mot c">Choisir.</span><br>
+    <span class="mot a" style="animation-delay:.15s">Agir.</span><br>
+    <span class="mot p" style="animation-delay:.3s">Partager.</span>
+  </h1>
+  <p contenteditable>Le QG de la caravane : prends des tâches, rends ton taf, gagne des points et des badges. Les chefs valident, tout le monde kiffe.</p>
+</section>
+
+<div class="marquee"><div id="marquee"></div></div>
+<p class="astuce">✋ Attrape une tuile pour la déplacer · ✏️ clique un texte pour le modifier · ⤢ taille · 🎨 couleur · ✕ supprimer · ⚙️ en bas à droite = réglages. Tout est sauvegardé dans ton navigateur.</p>
+
+<main id="bento">
+  <article class="tuile l2 h2 fond-r" data-id="progression">
+    <h3 contenteditable>Progression du CAP</h3>
+    <div class="gros-chiffre"><span class="compteur" data-cible="68">0</span>%</div>
+    <small>Choisir</small><div class="jauge"><i style="--x:var(--choisir)" data-w="100"></i></div>
+    <small>Agir</small><div class="jauge"><i style="--x:var(--agir)" data-w="72"></i></div>
+    <small>Partager</small><div class="jauge"><i style="--x:var(--partager)" data-w="18"></i></div>
+  </article>
+
+  <article class="tuile" data-id="points" data-pour="jeune">
+    <h3 contenteditable>Mes points</h3>
+    <div class="gros-chiffre"><span class="compteur" data-cible="1240">0</span></div>
+    <span class="emoji-geant">⭐</span>
+  </article>
+
+  <article class="tuile fond-c" data-id="phase">
+    <h3 contenteditable>Phase actuelle</h3>
+    <p contenteditable style="font-size:1.3rem;font-weight:700;margin-top:.5rem">Agir 🔥<br>J-12 avant le camp</p>
+    <span class="emoji-geant">🏕️</span>
+  </article>
+
+  <article class="tuile l2 h2" data-id="taches" data-pour="jeune">
+    <h3 contenteditable>Tâches à prendre</h3>
+    <label class="tache"><input type="checkbox"><i class="pastille" style="background:var(--agir)"></i><span contenteditable>Réserver le train</span><b class="pts">+40</b></label>
+    <label class="tache"><input type="checkbox"><i class="pastille" style="background:var(--agir)"></i><span contenteditable>Budget nourriture</span><b class="pts">+60</b></label>
+    <label class="tache"><input type="checkbox"><i class="pastille" style="background:var(--choisir)"></i><span contenteditable>Vote du lieu</span><b class="pts">+20</b></label>
+    <label class="tache"><input type="checkbox"><i class="pastille" style="background:var(--partager)"></i><span contenteditable>Montage vidéo du camp</span><b class="pts">+80</b></label>
+    <label class="tache"><input type="checkbox"><i class="pastille" style="background:var(--agir)"></i><span contenteditable>Contacter la mairie</span><b class="pts">+50</b></label>
+  </article>
+
+  <article class="tuile l2 fond-p" data-id="badges">
+    <h3 contenteditable>Vitrine à badges</h3>
+    <div class="badges">
+      <div class="badge" title="Première tâche">🥇</div><div class="badge" title="Trésorier·e">💰</div>
+      <div class="badge" title="Cuistot">🍳</div><div class="badge verrou" title="🔒 5 tâches validées">🧭</div>
+      <div class="badge verrou" title="🔒 Rendre 3 vidéos">🎬</div>
+    </div>
+  </article>
+
+  <article class="tuile fond-a h2" data-id="podium">
+    <h3 contenteditable>Podium</h3>
+    <div class="podium">
+      <div style="height:65%;animation-delay:.2s">🥈<small contenteditable>Léa</small></div>
+      <div style="height:100%">🥇<small contenteditable>Tom</small></div>
+      <div style="height:45%;animation-delay:.4s">🥉<small contenteditable>Inès</small></div>
+    </div>
+  </article>
+
+  <article class="tuile" data-id="validation" data-pour="chef">
+    <h3 contenteditable>À valider</h3>
+    <div class="gros-chiffre" style="color:var(--accent)">3</div>
+    <small contenteditable>rendus attendent un chef</small>
+  </article>
+
+  <article class="tuile l2 h2 fond-r" data-id="rendus" data-pour="chef">
+    <h3 contenteditable>Rendus à valider</h3>
+    <div id="rendus">
+      <div class="rendu"><span>📄</span><span><span class="qui">Léa</span> · Budget nourriture</span><span class="act"><button class="ko" title="Renvoyer">↩</button><button class="ok" title="Valider">✓</button></span></div>
+      <div class="rendu"><span>🎬</span><span><span class="qui">Inès</span> · Teaser du camp</span><span class="act"><button class="ko" title="Renvoyer">↩</button><button class="ok" title="Valider">✓</button></span></div>
+      <div class="rendu"><span>🗺️</span><span><span class="qui">Tom</span> · Itinéraire J1</span><span class="act"><button class="ko" title="Renvoyer">↩</button><button class="ok" title="Valider">✓</button></span></div>
+      <div class="rendu"><span>📞</span><span><span class="qui">Noé</span> · Appel à la mairie</span><span class="act"><button class="ko" title="Renvoyer">↩</button><button class="ok" title="Valider">✓</button></span></div>
+    </div>
+  </article>
+
+  <article class="tuile l2 h2" data-id="calendrier">
+    <h3 contenteditable>Novembre 2026</h3>
+    <div class="cal" id="cal"></div>
+    <div class="cal-info" id="cal-info">Clique un jour coloré 👆</div>
+  </article>
+
+  <article class="tuile h2" data-id="fil">
+    <h3 contenteditable>En direct 📡</h3>
+    <div class="fil" id="fil"></div>
+  </article>
+
+  <article class="tuile l2" data-id="galerie">
+    <h3 contenteditable>Souvenirs</h3>
+    <div class="galerie">
+      <div style="background:var(--choisir)" data-legende="Le vote du lieu">🗳️</div>
+      <div style="background:var(--agir)" data-legende="Week-end chantier">🔨</div>
+      <div style="background:var(--partager)" data-legende="Veillée autour du feu">🔥</div>
+      <div style="background:var(--accent)" data-legende="Arrivée au camp">⛺</div>
+    </div>
+  </article>
+
+  <article class="tuile l2" data-id="roles">
+    <h3 contenteditable>Rôles</h3>
+    <p contenteditable style="margin-top:.5rem;line-height:1.9">🧑‍🍳 Intendance — Tom · 💶 Trésorerie — Léa · 🗺️ Itinéraire — Inès · 📸 Reportage — <i>libre !</i></p>
+  </article>
+</main>
+
+<aside id="panneau">
+  <h4>🎨 Réglages</h4>
+  <label>Accent <input type="color" data-var="--accent" value="#ce1b37"></label>
+  <label>Choisir <input type="color" data-var="--choisir" value="#f2b705"></label>
+  <label>Agir <input type="color" data-var="--agir" value="#10916f"></label>
+  <label>Partager <input type="color" data-var="--partager" value="#7b55d6"></label>
+  <label>Arrondis <input type="range" min="0" max="40" value="22" data-var="--rayon" data-unite="px"></label>
+  <label>Vitesse anim <input type="range" min="0.2" max="3" step="0.1" value="1" data-var="--vitesse"></label>
+  <div style="display:flex;gap:.4rem;margin-top:.7rem;flex-wrap:wrap">
+    <button class="btn" id="ajout">+ Tuile</button>
+    <button class="btn" id="export">💾 HTML</button>
+    <button class="btn" id="reset" title="Réinitialiser">↺</button>
+  </div>
+</aside>
+<div id="visionneuse"><div></div></div>
+<button class="btn rouge" id="bouton-panneau" title="Réglages"><span>⚙️</span></button>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const bento=$('#bento'),racine=document.documentElement,CLE='cap-maquette-v2';
+
+/* curseur */
+const cur=$('#curseur');
+addEventListener('pointermove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
+document.addEventListener('pointerover',e=>cur.classList.toggle('gros',!!e.target.closest('button,.tuile,label,.badge')));
+
+/* bandeau défilant */
+$('#marquee').innerHTML=('<span>Choisir ✦ Agir ✦ Partager ✦ Toujours prêts ✦ Caravane en feu ✦</span>').repeat(8);
+
+/* outils de tuile */
+const fonds=['','fond-r','fond-c','fond-a','fond-p'];
+function equiper(t){
+  t.draggable=true;
+  if($('.outils',t))return;
+  const o=document.createElement('div');o.className='outils';
+  o.innerHTML='<button data-a="taille" title="Taille">⤢</button><button data-a="fond" title="Couleur">🎨</button><button data-a="suppr" title="Supprimer">✕</button>';
+  t.prepend(o);
+}
+bento.addEventListener('click',e=>{
+  const b=e.target.closest('.outils button');if(!b)return;
+  const t=b.closest('.tuile'),a=b.dataset.a;
+  if(a==='taille'){
+    const cycle=['','l2','h2','l2 h2'];
+    const actuel=['l2','h2'].filter(c=>t.classList.contains(c)).join(' ');
+    t.classList.remove('l2','h2');
+    const suivant=cycle[(cycle.indexOf(actuel)+1)%cycle.length];
+    if(suivant)t.classList.add(...suivant.split(' '));
+  }
+  if(a==='fond'){
+    const i=fonds.findIndex(f=>f&&t.classList.contains(f));
+    fonds.forEach(f=>f&&t.classList.remove(f));
+    const n=fonds[(Math.max(i,0)+1)%fonds.length];if(n)t.classList.add(n);
+  }
+  if(a==='suppr'){t.animate([{transform:'none'},{transform:'scale(0) rotate(30deg)'}],{duration:300});setTimeout(()=>{t.remove();sauver()},280);return}
+  t.animate([{transform:'scale(.9)'},{transform:'scale(1.04)'},{transform:'none'}],{duration:400});
+  sauver();
+});
+
+/* pas de drag quand on édite du texte */
+bento.addEventListener('pointerdown',e=>{const t=e.target.closest('.tuile');if(t)t.draggable=!e.target.closest('[contenteditable],input,button')});
+
+/* glisser-déposer avec animation FLIP */
+let tenu=null;
+bento.addEventListener('dragstart',e=>{tenu=e.target.closest?.('.tuile');if(!tenu)return;tenu.style.transform='';setTimeout(()=>tenu&&tenu.classList.add('drag'))});
+bento.addEventListener('dragend',()=>{tenu?.classList.remove('drag');$$('.cible').forEach(c=>c.classList.remove('cible'));tenu=null;sauver()});
+bento.addEventListener('dragover',e=>{
+  e.preventDefault();const c=e.target.closest('.tuile');if(!c||c===tenu||!tenu||c.getAnimations().length)return;
+  $$('.cible').forEach(x=>x.classList.remove('cible'));c.classList.add('cible');
+  const avant=new Map($$('.tuile').map(t=>[t,t.getBoundingClientRect()]));
+  const r=c.getBoundingClientRect(),apres=(e.clientX-r.left)/r.width>.5;
+  const ref=apres?c.nextSibling:c;if(ref===tenu||ref===tenu.nextSibling&&!apres)return;
+  bento.insertBefore(tenu,ref);
+  $$('.tuile').forEach(t=>{const a=avant.get(t),b=t.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;
+    if(dx||dy)t.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:320,easing:'cubic-bezier(.2,1.2,.4,1)'})});
+});
+
+/* apparition au scroll, compteurs, jauges */
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;const t=en.target;
+  setTimeout(()=>t.classList.add('vu'),(+t.dataset.ordre%4)*90);
+  $$('.compteur',t).forEach(c=>{const fin=+c.dataset.cible,d=performance.now();
+    (function f(n){const p=Math.min((n-d)/1400,1);c.textContent=Math.round(fin*(1-Math.pow(1-p,4))).toLocaleString('fr');if(p<1)requestAnimationFrame(f)})(d)});
+  $$('.jauge i',t).forEach(j=>setTimeout(()=>j.style.width=j.dataset.w+'%',300));
+  io.unobserve(t)}),{threshold:.15});
+function observer(){$$('.tuile').forEach((t,i)=>{t.dataset.ordre=i;equiper(t);io.observe(t)})}
+
+/* inclinaison 3D au survol */
+bento.addEventListener('pointermove',e=>{const t=e.target.closest('.tuile');if(!t||tenu)return;const r=t.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+  t.style.transform=`perspective(800px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translate(-3px,-3px)`});
+bento.addEventListener('pointerout',e=>{const t=e.target.closest('.tuile');if(t&&!t.contains(e.relatedTarget))t.style.transform=''});
+
+/* tâche cochée -> confettis */
+bento.addEventListener('change',e=>{if(e.target.type!=='checkbox')return;const l=e.target.closest('.tache');l.classList.toggle('fait',e.target.checked);
+  if(e.target.checked){const r=l.getBoundingClientRect();confettis(r.left+r.width/2,r.top,60);toast(`${$('.pts',l).textContent} points ! 🔥`)}sauver()});
+
+/* confettis */
+const cv=$('#confettis'),cx=cv.getContext('2d');let parts=[];
+function dim(){cv.width=innerWidth;cv.height=innerHeight}dim();addEventListener('resize',dim);
+function confettis(x=innerWidth/2,y=innerHeight/3,n=180){
+  const cs=getComputedStyle(racine),coul=['--accent','--choisir','--agir','--partager'].map(v=>cs.getPropertyValue(v).trim());
+  const vide=!parts.length;
+  for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*16,vy:Math.random()*-16-4,r:Math.random()*7+4,c:coul[i%4],a:Math.random()*6,va:(Math.random()-.5)*.4,v:200});
+  if(vide)requestAnimationFrame(boucle)}
+function boucle(){cx.clearRect(0,0,cv.width,cv.height);parts=parts.filter(p=>p.v-->0);
+  parts.forEach(p=>{p.vy+=.45;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.a+=p.va;cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2);cx.restore()});
+  if(parts.length)requestAnimationFrame(boucle)}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('vu');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('vu'),2000)}
+$('#fete').onclick=()=>{confettis();toast('Tâche validée par le chef ! ✅')};
+
+/* thème */
+$('#theme').onclick=()=>{racine.dataset.theme=racine.dataset.theme==='sombre'?'':'sombre';sauver()};
+
+/* panneau de réglages */
+$('#bouton-panneau').onclick=()=>$('#panneau').classList.toggle('ouvert');
+const appliquer=i=>racine.style.setProperty(i.dataset.var,i.value+(i.dataset.unite||''));
+$$('#panneau [data-var]').forEach(i=>i.addEventListener('input',()=>{appliquer(i);sauver()}));
+$('#ajout').onclick=()=>{const t=document.createElement('article');t.className='tuile fond-c';t.dataset.id='t'+Date.now();
+  t.innerHTML='<h3 contenteditable>Nouvelle tuile</h3><p contenteditable>Écris ce que tu veux ✏️</p>';
+  bento.append(t);observer();t.scrollIntoView({behavior:'smooth',block:'center'});confettis(innerWidth/2,innerHeight/2,50);sauver()};
+$('#reset').onclick=()=>{if(confirm('Tout remettre à zéro ?')){localStorage.removeItem(CLE);location.reload()}};
+$('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['<!doctype html>\n'+racine.outerHTML],{type:'text/html'}));a.download='maquette-cap.html';a.click()};
+
+/* sauvegarde locale */
+let tSave;document.addEventListener('input',e=>{if(e.target.isContentEditable)sauver()});
+function sauver(){clearTimeout(tSave);tSave=setTimeout(()=>{
+  const vars={};$$('#panneau [data-var]').forEach(i=>vars[i.dataset.var]=i.value);
+  const tuiles=$$('.tuile').map(t=>{const c=t.cloneNode(true);c.classList.remove('vu','drag','cible');c.style.transform='';$('.outils',c)?.remove();return c.outerHTML});
+  localStorage.setItem(CLE,JSON.stringify({tuiles,vars,theme:racine.dataset.theme||'',role:document.body.dataset.role,son:sonActif,hero:$('.hero').innerHTML}))},300)}
+function charger(){try{const s=JSON.parse(localStorage.getItem(CLE));if(!s)return;
+  bento.innerHTML=s.tuiles.join('');$('.hero').innerHTML=s.hero;racine.dataset.theme=s.theme;
+  if(s.role)changerRole(s.role,true);if(s.son===false){sonActif=false;$('#son').textContent='🔇'}
+  $$('#panneau [data-var]').forEach(i=>{if(s.vars[i.dataset.var]!=null){i.value=s.vars[i.dataset.var];appliquer(i)}});
+  $$('.tache input').forEach(i=>i.checked=i.closest('.tache').classList.contains('fait'));
+  $$('.jauge i').forEach(j=>j.style.width='');}catch{}}
+/* ===== SONS (synthétisés, aucun fichier) ===== */
+let sonActif=true,audio;
+function bip(notes,type='triangle',duree=.12){if(!sonActif)return;
+  audio??=new (window.AudioContext||window.webkitAudioContext)();
+  notes.forEach((f,i)=>{const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime+i*duree*.8;
+    o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+duree*1.6);
+    o.connect(g).connect(audio.destination);o.start(t);o.stop(t+duree*1.7)})}
+const SONS={clic:()=>bip([660],'square',.05),succes:()=>bip([523,659,784,1047]),rate:()=>bip([300,220],'sawtooth',.15),
+  pop:()=>bip([880,1320],'sine',.07),swoosh:()=>bip([400,600,900],'sine',.05)};
+$('#son').onclick=()=>{sonActif=!sonActif;$('#son').textContent=sonActif?'🔊':'🔇';SONS.pop();sauver()};
+document.addEventListener('click',e=>{if(e.target.closest('.outils button,.btn,.bascule button'))SONS.clic()},true);
+bento.addEventListener('dragend',()=>SONS.swoosh());
+const confettisBase=confettis;confettis=(...a)=>{SONS.succes();confettisBase(...a)};
+
+/* ===== RÔLE JEUNE / CHEF ===== */
+function changerRole(r,silence){
+  const avant=new Map($$('.tuile').map(t=>[t,t.getBoundingClientRect()]));
+  document.body.dataset.role=r;
+  $$('#bascule button').forEach(b=>b.classList.toggle('actif',b.dataset.r===r));
+  $('#fete').style.display=r==='chef'?'':'none';
+  if(silence)return;
+  $$('.tuile').forEach(t=>{if(!t.offsetParent)return;const a=avant.get(t),b=t.getBoundingClientRect();
+    t.animate(a.width?[{transform:`translate(${a.left-b.left}px,${a.top-b.top}px)`},{transform:'none'}]:[{transform:'scale(.5) rotate(-8deg)',opacity:0},{transform:'none',opacity:1}],{duration:500,easing:'cubic-bezier(.2,1.3,.4,1)'});
+    $$('.compteur',t).forEach(c=>c.textContent=Number(c.dataset.cible).toLocaleString('fr'))});
+  toast(r==='chef'?'Mode chef activé 🧑‍🏫':'Mode jeune activé 🧒');sauver()}
+$$('#bascule button').forEach(b=>b.onclick=()=>changerRole(b.dataset.r));
+
+/* ===== RENDUS À VALIDER (chef) ===== */
+bento.addEventListener('click',e=>{const b=e.target.closest('.rendu button');if(!b)return;const r=b.closest('.rendu'),qui=$('.qui',r).textContent;
+  if(b.classList.contains('ok')){const p=b.getBoundingClientRect();confettis(p.left,p.top,70);toast(`Validé ! +50 pts pour ${qui} 🎉`);publier(`✅ Un chef a validé le rendu de <b>${qui}</b>`,'--agir')}
+  else{r.classList.add('secoue');SONS.rate();toast(`Renvoyé à ${qui} pour correction ↩`);publier(`↩ Rendu de <b>${qui}</b> à corriger`,'--choisir')}
+  setTimeout(()=>{r.classList.add('parti');setTimeout(()=>{r.remove();const l=$('#rendus');
+    if(l&&!$('.rendu',l))l.innerHTML='<p class="vide">Tout est validé 😎<br>Va boire un chocolat chaud.</p>';sauver()},450)},b.classList.contains('ok')?100:450)});
+
+/* ===== CALENDRIER ===== */
+const EVENEMENTS={7:['Réunion de caravane','--choisir'],14:['Week-end chantier','--agir'],16:['Rendu du budget','--accent'],21:['Vente de crêpes','--agir'],28:['Soirée projection','--partager']};
+function construireCal(){const c=$('#cal');if(!c)return;const auj=new Date();
+  let h=['L','M','M','J','V','S','D'].map(j=>`<b>${j}</b>`).join('');
+  const decal=(new Date(2026,10,1).getDay()+6)%7;h+='<i></i>'.repeat(decal);
+  for(let d=1;d<=30;d++){const ev=EVENEMENTS[d];
+    h+=`<span class="${ev?'ev':''} ${auj.getFullYear()===2026&&auj.getMonth()===10&&auj.getDate()===d?'auj':''}" data-j="${d}" ${ev?`style="--ev:var(${ev[1]})"`:''}>${d}</span>`}
+  c.innerHTML=h}
+bento.addEventListener('click',e=>{const s=e.target.closest('.cal span');if(!s)return;const ev=EVENEMENTS[s.dataset.j],i=$('#cal-info');
+  SONS.pop();i.textContent=ev?`📌 ${s.dataset.j} nov. — ${ev[0]}`:`${s.dataset.j} nov. — rien de prévu… pour l'instant 👀`;
+  i.animate([{transform:'translateY(8px)',opacity:0},{transform:'none',opacity:1}],{duration:300})});
+
+/* ===== FIL D'ACTIVITÉ ===== */
+const GENS=['Léa','Tom','Inès','Noé','Jade','Sacha','Malo'],
+  ACTIONS=[['a pris la tâche « Courses du camp »','--agir'],['a rendu son travail 📄','--partager'],['a débloqué le badge 🧭 Explorateur','--choisir'],
+   ['a voté pour le lieu du camp 🗳️','--choisir'],['a posté 12 photos 📸','--partager'],['a gagné 40 points ⭐','--accent'],['a rejoint le rôle Intendance 🧑‍🍳','--agir']];
+function publier(html,c){const f=$('#fil');if(!f)return;const p=document.createElement('p');p.style.setProperty('--c',`var(${c})`);
+  p.innerHTML=`${html}<time>à l'instant</time>`;f.prepend(p);$$('p',f).slice(8).forEach(x=>x.remove())}
+function auHasard(){const a=ACTIONS[Math.random()*ACTIONS.length|0];publier(`<b>${GENS[Math.random()*GENS.length|0]}</b> ${a[0]}`,a[1])}
+setInterval(()=>{if(!document.hidden)auHasard()},5000/Math.max(.2,+getComputedStyle(racine).getPropertyValue('--vitesse')||1));
+
+/* ===== GALERIE + VISIONNEUSE ===== */
+const vis=$('#visionneuse');
+bento.addEventListener('click',e=>{const g=e.target.closest('.galerie div');if(!g)return;SONS.pop();
+  $('div',vis).style.background=g.style.background;$('div',vis).innerHTML=`<div style="all:unset">${g.textContent}<small>${g.dataset.legende||''}</small></div>`;vis.classList.add('vu')});
+vis.onclick=()=>vis.classList.remove('vu');
+addEventListener('keydown',e=>{if(e.key==='Escape')vis.classList.remove('vu')});
+
+/* ===== CODE SECRET : ↑↑↓↓←→←→BA ===== */
+const KONAMI=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];let k=0;
+addEventListener('keydown',e=>{k=e.key===KONAMI[k]?k+1:0;if(k===KONAMI.length){k=0;
+  for(let i=0;i<5;i++)setTimeout(()=>confettis(Math.random()*innerWidth,innerHeight*.3),i*250);
+  $$('.tuile').forEach((t,i)=>t.animate([{transform:'none'},{transform:'rotate(360deg) scale(.8)'},{transform:'none'}],{duration:900,delay:i*60}));
+  toast('🦄 Mode légende débloqué !')}});
+
+charger();
+changerRole(document.body.dataset.role,true);
+construireCal();
+const fil=$('#fil');if(fil){fil.innerHTML='';for(let i=0;i<4;i++)auHasard()}
+observer();
+</script>
+</body>
+</html>
