@@ -6,7 +6,9 @@ import { PhaseColumn } from '@/components/PhaseColumn'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, isChef } from '@/lib/domain/types'
+import { formatEuros } from '@/lib/domain/money'
 import { NotFoundError } from '@/lib/services/errors'
+import { totalForProject } from '@/lib/services/extraJobService'
 import { getVisibleProject } from '@/lib/services/projectService'
 import { getScale } from '@/lib/services/settingsService'
 import { listBoard } from '@/lib/services/taskService'
@@ -29,7 +31,11 @@ export default async function CapPage({ params }: { params: Promise<{ projectId:
     redirect(`/cap/${task.projectId}/tache/${task.id}`)
   }
 
-  const [board, scale] = await Promise.all([listBoard(db, project.id), getScale(db)])
+  const [board, scale, cagnotte] = await Promise.all([
+    listBoard(db, project.id),
+    getScale(db),
+    totalForProject(db, project.id),
+  ])
   const avancement = phaseProgress(PHASES.flatMap((phase) => board[phase]))
   const modifiable = project.status !== 'ARCHIVE'
   const peutAjouter = modifiable && (isChef(user) || project.status === 'EN_COURS')
@@ -38,6 +44,11 @@ export default async function CapPage({ params }: { params: Promise<{ projectId:
     <div className="flex flex-col gap-5">
       <EnteteProjet projet={project} board={board} avancement={avancement} />
       <OngletsProjet projectId={project.id} actif="tableau" />
+
+      <p className="rounded-lg border border-trait bg-carte p-3 text-sm">
+        <span className="panneau-titre text-2xl tabular-nums">{formatEuros(cagnotte)}</span>
+        <span className="block text-xs text-encre-douce">récoltés en extra jobs pour ce CAP</span>
+      </p>
 
       {peutAjouter ? (
         <details className="rounded-lg border border-trait bg-carte px-3 py-2">

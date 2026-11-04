@@ -6,6 +6,8 @@ import { TaskCard } from '@/components/TaskCard'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, isChef, type Phase } from '@/lib/domain/types'
+import { formatEuros } from '@/lib/domain/money'
+import { totalCollected } from '@/lib/services/extraJobService'
 import { listRecentNotes } from '@/lib/services/noteService'
 import { listNotifications } from '@/lib/services/notificationService'
 import { getScore } from '@/lib/services/pointsService'
@@ -17,7 +19,7 @@ import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
 export default async function AccueilPage() {
   const user = await requireUser()
 
-  const [score, notifications, badges, scale, projets, billets] = await Promise.all([
+  const [score, notifications, badges, scale, projets, billets, cagnotte] = await Promise.all([
     getScore(db, user.id),
     listNotifications(db, user.id, 4),
     db.userBadge.findMany({
@@ -29,6 +31,7 @@ export default async function AccueilPage() {
     getScale(db),
     listLiveProjects(db),
     listRecentNotes(db, user, 2),
+    totalCollected(db, user),
   ])
 
   // Un CAP par ligne, avec ce qu'il me reste dessus.
@@ -60,6 +63,11 @@ export default async function AccueilPage() {
           <span className="block text-xs opacity-90">points en tout</span>
         </p>
       </header>
+
+      <p className="rounded-lg border border-trait bg-carte p-3 text-sm">
+        <span className="panneau-titre text-2xl tabular-nums">{formatEuros(cagnotte)}</span>
+        <span className="block text-xs text-encre-douce">récoltés en extra jobs pour nos CAP en cours</span>
+      </p>
 
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
