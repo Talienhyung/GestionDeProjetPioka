@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { BadgeShelf } from '@/components/BadgeShelf'
 import { requireUser } from '@/lib/auth/guard'
+import { isChef } from '@/lib/domain/types'
 import { db } from '@/lib/db'
 import { getLedger, getScore } from '@/lib/services/pointsService'
 
@@ -20,6 +21,22 @@ export default async function ProfilPage() {
     db.badge.findMany({ orderBy: { sortOrder: 'asc' } }),
     db.userBadge.findMany({ where: { userId: user.id } }),
   ])
+
+  const liensGestion = [
+    ...(isChef(user)
+      ? [
+          { href: '/pilotage', label: 'Pilotage des CAP' },
+          { href: '/membres', label: 'Les jeunes' },
+          { href: '/extra-jobs', label: 'Extra jobs' },
+        ]
+      : []),
+    ...(user.role === 'SUPER_ADMIN'
+      ? [
+          { href: '/comptes', label: 'Comptes' },
+          { href: '/parametres', label: 'Paramètres' },
+        ]
+      : []),
+  ]
 
   const earnedMap = new Map(earned.map((userBadge) => [userBadge.badgeId, userBadge.earnedAt]))
 
@@ -56,6 +73,21 @@ export default async function ProfilPage() {
           </ul>
         )}
       </section>
+
+      {liensGestion.length > 0 ? (
+        <section>
+          <h2 className="panneau-titre mb-2 text-lg">Gestion</h2>
+          <ul className="flex flex-col gap-2">
+            {liensGestion.map((lien) => (
+              <li key={lien.href}>
+                <Link href={lien.href} className="block rounded-lg border border-trait p-3 font-semibold hover:text-accent">
+                  {lien.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <Link href="/profil/mot-de-passe" className="rounded-lg border border-trait p-3 text-center font-semibold">
         Changer mon mot de passe
