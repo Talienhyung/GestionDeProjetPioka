@@ -1,20 +1,36 @@
 import type { Metadata } from 'next'
-import { Atkinson_Hyperlegible, Barlow_Condensed } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 
-/** Typo de panneau : capitales serrées, lisibles de loin comme un balisage. */
-const barlow = Barlow_Condensed({
-  variable: '--font-barlow',
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
+/*
+ * Typographies de la charte Scouts et Guides de France, hébergées avec le
+ * site (sous-ensemble latin, licence SIL OFL) : pas d'appel à Google Fonts au
+ * build ni à l'affichage.
+ */
+
+/** Titrage : au pinceau. */
+const caveatBrush = localFont({
+  src: './fonts/caveat-brush.woff2',
+  variable: '--font-caveat-brush',
+  weight: '400',
   display: 'swap',
 })
 
-/** Texte courant : dessinée pour la lisibilité, utile sur un téléphone en plein soleil. */
-const atkinson = Atkinson_Hyperlegible({
-  variable: '--font-atkinson',
-  subsets: ['latin'],
-  weight: ['400', '700'],
+/** Sous-titres, étiquettes et exergues (police variable). */
+const raleway = localFont({
+  src: './fonts/raleway.woff2',
+  variable: '--font-raleway',
+  weight: '500 800',
+  display: 'swap',
+})
+
+/** Texte courant. */
+const sarabun = localFont({
+  src: [
+    { path: './fonts/sarabun-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/sarabun-700.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--font-sarabun',
   display: 'swap',
 })
 
@@ -25,8 +41,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr">
-      <body className={`${barlow.variable} ${atkinson.variable} antialiased`}>{children}</body>
+    /* Les variables de police vont sur <html> : les jetons de :root s'en servent. */
+    <html lang="fr" className={`${caveatBrush.variable} ${raleway.variable} ${sarabun.variable}`}>
+      <body className="antialiased">{children}</body>
     </html>
   )
 }

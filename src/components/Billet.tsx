@@ -21,6 +21,16 @@ interface Props {
   modifiable: boolean
 }
 
+/** Papiers de la charte, en teintes douces : un billet garde toujours la même couleur. */
+const PAPIERS = ['bg-choisir-doux', 'bg-carte', 'bg-agir-doux', 'bg-partager-doux', 'bg-accent-doux']
+const INCLINAISONS = ['-rotate-[1.6deg]', 'rotate-[1.2deg]', '-rotate-[0.5deg]', 'rotate-[2deg]', '-rotate-[1.1deg]']
+
+function empreinte(id: string): number {
+  let h = 0
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return h
+}
+
 function quand(date: Date): string {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
 }
@@ -38,13 +48,19 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
 
   return (
     <article
-      className={`flex overflow-hidden rounded-lg border bg-carte ${
-        note.pinned ? 'border-accent' : 'border-trait'
-      }`}
+      className={`relative mb-4 break-inside-avoid rounded-sm pt-3 shadow-[0_1px_2px_rgb(0_58_93/0.12),0_6px_14px_-6px_rgb(0_58_93/0.25)] transition-transform hover:rotate-0 ${
+        PAPIERS[empreinte(note.id) % PAPIERS.length]
+      } ${enEdition ? '' : INCLINAISONS[empreinte(note.id) % INCLINAISONS.length]}`}
     >
-      {note.pinned ? <span aria-hidden className="w-1.5 shrink-0 bg-accent" /> : null}
+      {/* Punaise : rouge pour un billet épinglé par un chef, bleue sinon. */}
+      <span
+        aria-hidden
+        className={`absolute top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full shadow-[inset_-2px_-2px_0_rgb(0_0_0/0.18),0_2px_3px_rgb(0_0_0/0.25)] ${
+          note.pinned ? 'bg-accent' : 'bg-institution/70'
+        }`}
+      />
 
-      <div className="min-w-0 flex-1 p-3">
+      <div className="min-w-0 p-3">
         {note.pinned ? (
           <p className="panneau text-[10px] text-accent-encre">épinglé</p>
         ) : null}
@@ -58,7 +74,7 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
               defaultValue={note.title}
               maxLength={TITRE_MAX}
               placeholder="Titre (facultatif)"
-              className="rounded border border-trait bg-surface p-2"
+              className="rounded border border-trait bg-carte p-2"
             />
             <textarea
               name="body"
@@ -92,10 +108,10 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
           </form>
         ) : (
           <>
-            {note.title ? <h3 className="panneau-titre text-lg">{note.title}</h3> : null}
+            {note.title ? <h3 className="panneau-titre text-base leading-snug">{note.title}</h3> : null}
             <p className="mt-0.5 whitespace-pre-wrap text-sm">{note.body}</p>
 
-            <p className="mt-2 text-xs text-encre-douce">
+            <p className="mt-3 text-[11px] text-encre-douce">
               {note.author.displayName} · {quand(note.updatedAt)}
             </p>
 

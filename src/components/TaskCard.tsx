@@ -1,7 +1,11 @@
 import Link from 'next/link'
-import type { Difficulty, Phase, TaskStatus } from '@/lib/domain/types'
+import { Icone } from '@/components/Icone'
+import type { Difficulty, TaskStatus } from '@/lib/domain/types'
 import { DIFFICULTY_LABELS } from '@/lib/domain/types'
-import { PHASE_STYLES, STATUS_LABELS, difficultyMarks } from '@/lib/ui/phases'
+import { STATUS_LABELS, difficultyMarks } from '@/lib/ui/phases'
+
+/** Libellés courts pour la pastille : elle tient sur une ligne, à côté du titre. */
+const COURT: Partial<Record<TaskStatus, string>> = { SOUMISE: 'À valider' }
 
 interface Props {
   projectId: string
@@ -18,52 +22,48 @@ interface Props {
   points?: number
 }
 
+/** Pastille d'état : la couleur dit d'un coup d'œil s'il y a quelque chose à faire. */
+const PASTILLE: Record<TaskStatus, string> = {
+  OUVERTE: 'bg-accent-doux text-accent-encre',
+  A_CORRIGER: 'bg-alerte-doux text-alerte',
+  EN_COURS: 'bg-surface-haute text-encre',
+  SOUMISE: 'bg-partager-doux text-partager-encre',
+  PROPOSEE: 'bg-choisir-doux text-choisir-encre',
+  TERMINEE: 'bg-ok-doux text-ok',
+  REJETEE: 'bg-surface-haute text-encre-douce',
+}
+
+/** Une tâche sur une ligne : titre, état, difficulté, points, qui. Un appui ouvre la tâche. */
 export function TaskCard({ projectId, task, currentUserId, points }: Props) {
-  const style = PHASE_STYLES[task.phase as Phase]
   const difficulty = task.difficulty as Difficulty
   const status = task.status as TaskStatus
-  const mine = task.assignments.some((a) => a.user.id === currentUserId)
-  const aPrendre = status === 'OUVERTE'
+  const terminee = status === 'TERMINEE'
+  const qui = task.assignments.map((a) => (a.user.id === currentUserId ? 'toi' : a.user.displayName))
 
   return (
     <Link
       href={`/cap/${projectId}/tache/${task.id}`}
-      className="flex overflow-hidden rounded-lg border border-trait bg-carte transition-colors hover:border-encre-douce"
-
+      className={`flex items-center gap-3 rounded-xl border bg-carte p-3 transition-colors active:bg-surface-haute ${
+        'border-trait hover:border-encre-douce'
+      }`}
     >
-      {/* Bande de balise : la couleur de l'étape, comme une marque sur un arbre. */}
-      <span aria-hidden className={`w-1.5 shrink-0 ${style.rail}`} />
-
-      <span className="min-w-0 flex-1 p-3">
-        <span className="flex items-baseline justify-between gap-2">
-          <span className="panneau-titre text-[17px]">{task.title}</span>
-          {points !== undefined ? (
-            <span className="shrink-0 text-xs tabular-nums text-encre-douce">{points} pts</span>
-          ) : null}
+      <span className="min-w-0 flex-1">
+        <span className={`block leading-snug font-bold ${terminee ? 'text-encre-douce line-through decoration-1' : ''}`}>
+          {task.title}
         </span>
-
-        <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-encre-douce">
-          <span className={style.ink} title={DIFFICULTY_LABELS[difficulty]}>
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-encre-douce">
+          <span title={DIFFICULTY_LABELS[difficulty]} aria-label={DIFFICULTY_LABELS[difficulty]}>
             {difficultyMarks(difficulty)}
           </span>
-          <span>{DIFFICULTY_LABELS[difficulty]}</span>
-          <span aria-hidden>·</span>
-          <span className={aPrendre ? 'font-bold text-accent-encre' : ''}>{STATUS_LABELS[status]}</span>
-        </span>
-
-        <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-          {mine ? (
-            <span className="panneau rounded-full bg-accent px-1.5 py-0.5 text-[10px] text-sur-accent">
-              toi
-            </span>
-          ) : null}
-          {task.assignments.length > 0 ? (
-            <span>{task.assignments.map((a) => a.user.displayName).join(', ')}</span>
-          ) : (
-            <span className="text-encre-douce">personne dessus pour l’instant</span>
-          )}
+          {points !== undefined ? <span className="tabular-nums">· {points} pts</span> : null}
+          {qui.length > 0 ? <span className="truncate">· {qui.join(', ')}</span> : null}
         </span>
       </span>
+
+      <span className={`panneau shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[10px] ${PASTILLE[status]}`}>
+        {COURT[status] ?? STATUS_LABELS[status]}
+      </span>
+      <Icone nom="chevron" taille={16} className="-mr-1 shrink-0 text-encre-douce" />
     </Link>
   )
 }

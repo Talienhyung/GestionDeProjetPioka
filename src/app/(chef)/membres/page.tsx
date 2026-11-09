@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { ActionButton } from '@/components/ActionButton'
 import { requireChef } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
@@ -10,12 +11,13 @@ export default async function MembresPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="panneau-titre text-3xl">Les jeunes</h1>
-        <p className="text-sm text-encre-douce">
-          Un jeune a oublié son mot de passe ? Génère-lui-en un nouveau, il devra le changer à sa prochaine connexion.
-        </p>
-      </header>
+      <PageHeader
+        picto="visage"
+        surtitre="Gestion"
+        titre="Les jeunes"
+        retour={{ href: '/profil', label: 'Profil' }}
+        description="Un mot de passe oublié ? Génère-en un nouveau : il devra le changer à sa prochaine connexion."
+      />
 
       {membres.length === 0 ? (
         <p className="text-sm text-encre-douce">Aucun compte jeune pour l&apos;instant.</p>

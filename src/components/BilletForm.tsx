@@ -9,8 +9,8 @@ export function BilletForm({ projectId }: { projectId: string | null }) {
   const [state, action, pending] = useActionState(createNoteAction, EMPTY_FORM_STATE)
 
   return (
-    <details className="rounded-lg border border-trait bg-carte px-3 py-2">
-      <summary className="panneau cursor-pointer text-sm">Écrire un billet</summary>
+    <details className="rounded-xl border border-trait bg-carte px-4 py-3">
+      <summary className="panneau cursor-pointer text-sm text-accent">+ Écrire un billet</summary>
 
       <form action={action} className="mt-3 flex flex-col gap-3">
         <input type="hidden" name="projectId" value={projectId ?? ''} />

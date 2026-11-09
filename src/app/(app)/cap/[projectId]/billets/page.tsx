@@ -1,5 +1,4 @@
 import { MurDeBillets } from '@/components/MurDeBillets'
-import { OngletsProjet } from '@/components/OngletsProjet'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { isChef } from '@/lib/domain/types'
@@ -14,12 +13,7 @@ export default async function BilletsProjetPage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="panneau-titre text-3xl">Billets</h1>
-        <p className="text-sm text-encre-douce">{project.title}</p>
-      </header>
-
-      <OngletsProjet projectId={project.id} actif="billets" />
+      <p className="text-sm text-encre-douce">Les billets propres à ce CAP : idées, comptes rendus, listes.</p>
 
       <MurDeBillets
         notes={notes}

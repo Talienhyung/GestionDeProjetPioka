@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { ActionButton } from '@/components/ActionButton'
 import { ReviewCard } from '@/components/ReviewCard'
 import { requireChef } from '@/lib/auth/guard'
@@ -24,11 +25,11 @@ export default async function ValidationPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="panneau-titre text-3xl">À valider</h1>
+      <PageHeader picto="coche" surtitre="Chefs" titre="À valider" description="Les travaux rendus et les tâches proposées par les jeunes." />
 
       <section className="flex flex-col gap-3">
         <h2 className="font-bold">Travaux rendus ({submissions.length})</h2>
-        {submissions.length === 0 ? <p className="text-sm text-encre-douce">Rien en attente. 🎉</p> : null}
+        {submissions.length === 0 ? <p className="text-sm text-encre-douce">Rien en attente.</p> : null}
         {submissions.map((submission) => {
           const difficulty = submission.task.difficulty as Difficulty
           const n = Math.max(1, submission.task.assignments.length)

@@ -4,9 +4,8 @@
  * Balisage — système de couleurs du site.
  *
  * Tout passe par des jetons définis ici, jamais par une classe de palette
- * brute dans un composant : c'est la seule façon d'avoir un thème sombre
- * qui tienne. Chaque jeton a une valeur claire sur :root et une valeur
- * sombre redéfinie plus bas, et rien d'autre ne change.
+ * brute dans un composant : changer de charte, c'est changer ces jetons,
+ * et rien d'autre.
  */
 
 @theme inline {
@@ -25,6 +24,9 @@
   --color-bouton: var(--bouton);
   --color-sur-bouton: var(--sur-bouton);
   --color-bandeau: var(--bandeau);
+  --color-institution: var(--institution);
+  --color-sur-institution: var(--sur-institution);
+  --color-surligne-institution: var(--surligne-institution);
   --color-sur-bandeau: var(--sur-bandeau);
 
   --color-choisir: var(--choisir);
@@ -44,119 +46,130 @@
   --color-erreur: var(--erreur);
   --color-erreur-doux: var(--erreur-doux);
 
-  --font-panneau: var(--font-barlow), "Arial Narrow", system-ui, sans-serif;
-  --font-texte: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  /* Charte SGDF : Caveat Brush pour le titrage, Raleway pour les sous-titres,
+     Sarabun pour le texte courant. */
+  --font-brush: var(--typo-titrage);
+  --font-panneau: var(--typo-panneau);
+  --font-texte: var(--typo-texte);
 }
 
+/*
+ * Charte Scouts et Guides de France (2019).
+ * - Bleu institutionnel #003a5d : présent partout, c'est l'encre du texte courant.
+ * - Rouge Pionniers-Caravelles #d03f15 : la couleur de la branche, l'accent du site.
+ * - Couleurs secondaires de la charte pour les étapes du CAP :
+ *   orange #ff8300, vert #007254, violet #6e74aa.
+ * Un seul thème, clair : la charte demande l'encre bleue sur fond clair.
+ */
 :root {
   color-scheme: light;
 
-  /* Neutres chauds, tirés vers le rouge de branche : un gris pur ferait
-     accidentel à côté de l'accent. */
-  --surface: #faf7f2;
-  --surface-haute: #f2ece3;
-  --carte: #ffffff;
-  --encre: #231c19;
-  --encre-douce: #6b5f58;
-  --trait: #e3d9cf;
+  /* Piles de polices déclarées ici et pas seulement dans @theme : Tailwind
+     n'émet une variable de thème que si une classe utilitaire s'en sert. */
+  --typo-titrage: var(--font-caveat-brush), "Comic Sans MS", cursive;
+  --typo-panneau: var(--font-raleway), system-ui, sans-serif;
+  --typo-texte: var(--font-sarabun), ui-sans-serif, system-ui, sans-serif;
 
-  /* Rouge Pionniers-Caravelles : la couleur du site. */
-  --accent: #ce1b37;
-  --accent-vif: #e8203f;
-  --accent-encre: #a8142b;
-  --accent-doux: #fdeaed;
+  /* Fond papier légèrement bleuté, tiré du bleu institutionnel. */
+  --surface: #f4f7fa;
+  --surface-haute: #e6edf3;
+  --carte: #ffffff;
+  --encre: #003a5d;
+  --encre-douce: #4b6b82;
+  --trait: #d3dee8;
+
+  /* Rouge Pionniers-Caravelles (P 180C). */
+  --accent: #d03f15;
+  --accent-vif: #ea5a2a;
+  --accent-encre: #a8310f;
+  --accent-doux: #fceae4;
   --sur-accent: #ffffff;
-  --bouton: #ce1b37;
+  --bouton: #d03f15;
   --sur-bouton: #ffffff;
-  --bandeau: #ce1b37;
+  --bandeau: #d03f15;
   --sur-bandeau: #ffffff;
 
-  /* Une teinte par étape, reprise du balisage de randonnée. */
-  --choisir: #f2b705;
-  --choisir-encre: #845300;
-  --choisir-doux: #fdf2d6;
-  --agir: #10916f;
-  --agir-encre: #0b6b52;
-  --agir-doux: #ddf2ea;
-  --partager: #7b55d6;
-  --partager-encre: #5b3ba6;
-  --partager-doux: #ece5fb;
+  /* Bleu institutionnel en aplat (P 302C). */
+  --institution: #003a5d;
+  --sur-institution: #ffffff;
+  /* Orange de la charte (P 151C) : seul accent lisible sur le bleu. */
+  --surligne-institution: #ff8300;
 
-  --ok: #0b6b52;
-  --ok-doux: #ddf2ea;
-  --alerte: #8a5a00;
-  --alerte-doux: #fdf2d6;
-  --erreur: #a32121;
-  --erreur-doux: #fbe6e4;
-}
+  /* Une teinte par étape, prise dans les couleurs secondaires de la charte. */
+  --choisir: #ff8300;
+  --choisir-encre: #9a4c00;
+  --choisir-doux: #fff0de;
+  --agir: #007254;
+  --agir-encre: #006049;
+  --agir-doux: #ddf1e9;
+  --partager: #6e74aa;
+  --partager-encre: #4c5290;
+  --partager-doux: #eaebf5;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --surface: #15120f;
-    --surface-haute: #1c1815;
-    --carte: #221c18;
-    --encre: #f4efe9;
-    --encre-douce: #a89a8e;
-    --trait: #352c26;
-
-    --accent: #ff4d64;
-    --accent-vif: #ff6b7e;
-    --accent-encre: #ff8a98;
-    --accent-doux: #2e1418;
-    --sur-accent: #2a0a10;
-    /* En sombre, un aplat rouge vif brûle l'écran : on garde la couleur,
-       en profondeur, et c'est le texte qui éclaire. */
-    /* Le rouge vif sert au texte et aux icônes ; les aplats prennent un
-       rouge plus dense, sinon le bouton fait néon. */
-    --bouton: #c22036;
-    --sur-bouton: #fff0f2;
-    --bandeau: #45121d;
-    --sur-bandeau: #ffe8ec;
-
-    --choisir: #f2b705;
-    --choisir-encre: #f8cf55;
-    --choisir-doux: #382c0f;
-    --agir: #22b68c;
-    --agir-encre: #4fd9b0;
-    --agir-doux: #0d2b23;
-    --partager: #9b7bf0;
-    --partager-encre: #bda3ff;
-    --partager-doux: #231a3b;
-
-    --ok: #4fd9b0;
-    --ok-doux: #0d2b23;
-    --alerte: #f8cf55;
-    --alerte-doux: #382c0f;
-    --erreur: #ff8a80;
-    --erreur-doux: #35191a;
-  }
+  --ok: #006049;
+  --ok-doux: #ddf1e9;
+  --alerte: #9a4c00;
+  --alerte-doux: #fff0de;
+  --erreur: #b3261e;
+  --erreur-doux: #fce8e6;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Pas de barres de défilement : on défile au doigt, à la molette ou au pavé. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   background: var(--surface);
   color: var(--encre);
-  font-family: var(--font-texte);
+  font-family: var(--typo-texte);
 }
 
-/* Typo de panneau : capitales serrées, comme un balisage de sentier. */
+/* Sous-titres et étiquettes : Raleway, en capitales espacées. */
 .panneau-titre {
-  font-family: var(--font-panneau);
-  font-weight: 600;
-  letter-spacing: 0.005em;
-  line-height: 1.15;
+  font-family: var(--typo-panneau);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
 }
 
 .panneau {
-  font-family: var(--font-panneau);
+  font-family: var(--typo-panneau);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+/* Titrage de la charte : Caveat Brush, au pinceau. */
+.brush,
+h1.panneau-titre {
+  font-family: var(--typo-titrage);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+h1.panneau-titre {
+  color: var(--accent);
+}
+
+/* Titre de page : un trait de feutre rouge sous le mot, comme sur un carnet. */
+.titre-page {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.2em;
+  text-decoration-skip-ink: none;
+  overflow-wrap: anywhere;
 }
 
 h1,
@@ -188,4 +201,39 @@ select {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/*
+ * Papier déchiré (élément du territoire visuel SGDF) : le bord bas de
+ * l'élément est découpé de façon irrégulière.
+ */
+.dechire-bas {
+  clip-path: polygon(
+    0 0, 100% 0, 100% calc(100% - 7px),
+    97% calc(100% - 3px), 93.5% calc(100% - 6px), 89% calc(100% - 1px), 84% calc(100% - 5px),
+    79.5% calc(100% - 2px), 74% calc(100% - 7px), 69% calc(100% - 3px), 64.5% 100%,
+    59% calc(100% - 5px), 54% calc(100% - 2px), 49% calc(100% - 7px), 44.5% calc(100% - 3px),
+    39% calc(100% - 6px), 34% 100%, 29.5% calc(100% - 4px), 24% calc(100% - 7px),
+    19% calc(100% - 2px), 14.5% calc(100% - 5px), 9% calc(100% - 1px), 4.5% calc(100% - 6px),
+    0 calc(100% - 3px)
+  );
+}
+
+/* Fiche d'écusson : elle monte doucement en s'ouvrant. */
+.ecusson-fiche[open] {
+  animation: fiche-ouvre 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes fiche-ouvre {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+}
+
+/* Le tableau d'affichage : un fond pointillé discret, comme un panneau perforé. */
+.tableau-liege {
+  background-color: var(--surface-haute);
+  background-image: radial-gradient(color-mix(in oklab, var(--encre) 14%, transparent) 1px, transparent 1.2px);
+  background-size: 14px 14px;
 }

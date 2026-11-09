@@ -1,5 +1,7 @@
 // src/app/(app)/cap/[taskId]/page.tsx
+import Link from 'next/link'
 import { ActionButton } from '@/components/ActionButton'
+import { Icone } from '@/components/Icone'
 import { SubmissionThread } from '@/components/SubmissionThread'
 import { SubmitWorkForm } from '@/components/SubmitWorkForm'
 import { requireUser } from '@/lib/auth/guard'
@@ -38,6 +40,13 @@ export default async function TaskPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <Link
+        href={`/cap/${projectId}`}
+        className="panneau -mb-2 inline-flex w-fit items-center gap-1 text-[11px] text-encre-douce hover:text-encre"
+      >
+        <Icone nom="chevron" taille={14} className="rotate-180" />
+        Tâches
+      </Link>
       <header className={`flex overflow-hidden rounded-xl border border-trait ${style.border} ${style.soft}`}>
         <span aria-hidden className={`w-2 shrink-0 ${style.rail}`} />
         <div className="flex-1 p-4">

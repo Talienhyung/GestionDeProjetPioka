@@ -28,7 +28,9 @@ export function ensureTemplate(): string {
 
   const dir = mkdtempSync(join(tmpdir(), 'cap-template-'))
   const built = join(dir, 'template.db')
-  execFileSync('node_modules/.bin/prisma', ['db', 'push', '--skip-generate', '--accept-data-loss'], {
+  // On lance le CLI de Prisma avec node : le raccourci node_modules/.bin/prisma
+  // est un script shell que Windows ne sait pas exécuter directement.
+  execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate', '--accept-data-loss'], {
     env: { ...process.env, DATABASE_URL: `file:${built}` },
     stdio: 'ignore',
   })

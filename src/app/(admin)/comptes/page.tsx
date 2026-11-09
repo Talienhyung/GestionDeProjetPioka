@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { ActionButton } from '@/components/ActionButton'
 import { CreateUserForm } from '@/components/CreateUserForm'
 import { requireSuperAdmin } from '@/lib/auth/guard'
@@ -14,7 +15,7 @@ export default async function ComptesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="panneau-titre text-3xl">Les comptes</h1>
+      <PageHeader picto="equipe" surtitre="Administration" titre="Les comptes" retour={{ href: '/profil', label: 'Profil' }} description="Crée les comptes des chefs et des jeunes. Les mots de passe provisoires ne s’affichent qu’une fois." />
 
       <section>
         <h2 className="panneau-titre mb-2 text-lg">Créer un compte</h2>

@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import Link from 'next/link'
 import { ActionButton } from '@/components/ActionButton'
 import { NewProjectForm } from '@/components/NewProjectForm'
@@ -31,7 +32,7 @@ export default async function PilotagePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="panneau-titre text-3xl">Pilotage des CAP</h1>
+      <PageHeader picto="destination" surtitre="Gestion" titre="Pilotage" retour={{ href: '/profil', label: 'Profil' }} description="Crée les CAP, choisis l’étape en cours, archive ceux qui sont finis." />
 
       <section>
         <h2 className="panneau mb-2 text-sm text-encre-douce">En cours ({parEtat.EN_COURS.length})</h2>

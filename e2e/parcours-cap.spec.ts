@@ -65,8 +65,10 @@ test('inscription, soumission, refus, correction, validation et points', async (
   await page.getByRole('button', { name: 'Valider' }).last().click()
   await expect(page.getByText('Rien en attente')).toBeVisible()
 
-  // Le jeune voit ses points et son badge.
+  // Le jeune voit ses points et son badge sur son profil.
   await seConnecter(page, 'tom', 'motdepasse-initial')
+  await page.getByRole('link', { name: 'Profil' }).click()
+  await page.waitForURL(/\/profil/)
   // 50 (difficile, seul) + 10 de bonus + 5 (Premier pas) + 10 (Costaud)
   await expect(page.getByText('75 points')).toBeVisible()
   // « Premier pas » apparaît aussi dans les notifications : on vise la vitrine.

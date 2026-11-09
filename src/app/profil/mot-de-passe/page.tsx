@@ -1,6 +1,7 @@
 // src/app/profil/mot-de-passe/page.tsx
 'use client'
 
+import { PageHeader } from '@/components/PageHeader'
 import { useActionState } from 'react'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 import { changePasswordAction } from './actions'
@@ -10,8 +11,7 @@ export default function ChangePasswordPage() {
 
   return (
     <main className="mx-auto flex max-w-sm flex-col gap-6 p-6">
-      <h1 className="panneau-titre text-2xl">Choisis ton mot de passe</h1>
-      <p className="text-sm text-encre-douce">8 caractères minimum. Ne le partage avec personne.</p>
+      <PageHeader picto="promesse" surtitre="Ton compte" titre="Mot de passe" description="8 caractères minimum. Ne le partage avec personne." />
 
       <form action={action} className="flex flex-col gap-4">
         <input name="current" type="password" placeholder="Mot de passe actuel" required

@@ -13,10 +13,10 @@ export function ScaleForm({ scale }: { scale: PointsScale }) {
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-trait p-4">
       <div className="flex gap-3">
         {DIFFICULTIES.map((difficulty) => (
-          <label key={difficulty} className="flex flex-1 flex-col gap-1 text-sm">
+          <label key={difficulty} className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
             {DIFFICULTY_LABELS[difficulty]}
             <input name={difficulty} type="number" min={1} defaultValue={scale[difficulty]}
-              className="rounded-lg border border-trait p-3" />
+              className="w-full min-w-0 rounded-lg border border-trait bg-carte p-3" />
           </label>
         ))}
       </div>

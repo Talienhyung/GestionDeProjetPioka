@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { ActionButton } from '@/components/ActionButton'
 import { ExtraJobForm } from '@/components/ExtraJobForm'
 import { requireChef } from '@/lib/auth/guard'
@@ -16,12 +17,13 @@ export default async function ExtraJobsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="panneau-titre text-3xl">Extra jobs</h1>
-        <p className="text-sm text-encre-douce">
-          Note l’argent gagné par les jeunes et répartis-le entre les CAP. Les jeunes voient le total sur l’accueil.
-        </p>
-      </header>
+      <PageHeader
+        picto="euros"
+        surtitre="Gestion"
+        titre="Extra jobs"
+        retour={{ href: '/profil', label: 'Profil' }}
+        description="Note l’argent gagné par les jeunes et répartis-le entre les CAP. Les jeunes voient le total sur l’accueil."
+      />
 
       {jeunes.length === 0 || caps.length === 0 ? (
         <p className="text-sm text-encre-douce">

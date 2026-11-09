@@ -31,6 +31,7 @@ model User {
   notes            Note[]
   extraJobsDone    ExtraJobWorker[]
   extraJobsLogged  ExtraJob[]
+  eventsCreated    Event[]
 }
 
 model Session {
@@ -136,6 +137,7 @@ model ProjectRole {
   holder       User?             @relation(fields: [holderId], references: [id])
   closedAt     DateTime?
   applications RoleApplication[]
+  events       EventRole[]
 }
 
 model RoleApplication {
@@ -274,4 +276,33 @@ model ExtraJobShare {
 model Setting {
   key   String @id
   value String
+}
+
+/// Un événement de l'agenda. audience : TOUS, CHEFS ou ROLES (les titulaires des rôles listés).
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String      @default("")
+  location    String      @default("")
+  startsAt    DateTime
+  endsAt      DateTime?
+  allDay      Boolean     @default(false)
+  audience    String      @default("TOUS")
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  roles       EventRole[]
+
+  @@index([startsAt])
+}
+
+/// Rôle de CAP visé par un événement réservé à certains rôles.
+model EventRole {
+  id            String      @id @default(cuid())
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  projectRoleId String
+  projectRole   ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, projectRoleId])
 }

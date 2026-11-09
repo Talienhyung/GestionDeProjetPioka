@@ -3,7 +3,6 @@ import { RoleForm } from '@/components/RoleForm'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { isChef } from '@/lib/domain/types'
-import { OngletsProjet } from '@/components/OngletsProjet'
 import { getVisibleProject } from '@/lib/services/projectService'
 import { listRoles } from '@/lib/services/roleService'
 import { applyAction, closeRoleAction, decideApplicationAction } from './actions'
@@ -17,15 +16,13 @@ export default async function RolesPage({ params }: { params: Promise<{ projectI
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="panneau-titre text-3xl">Les rôles</h1>
-        <p className="text-sm text-encre-douce">{project.title}</p>
-      </header>
-      <OngletsProjet projectId={project.id} actif="roles" />
+      <p className="text-sm text-encre-douce">
+        Trésorier, intendant… Chaque rôle est tenu par un jeune jusqu’à la fin du CAP.
+      </p>
 
       {chef ? (
-        <details className="rounded-xl border border-trait p-4">
-          <summary className="cursor-pointer font-semibold">Créer un rôle</summary>
+        <details className="rounded-xl border border-dashed border-trait bg-carte px-4 py-3">
+          <summary className="panneau cursor-pointer text-sm text-accent">+ Créer un rôle</summary>
           <div className="mt-3">
             <RoleForm projectId={project.id} />
           </div>

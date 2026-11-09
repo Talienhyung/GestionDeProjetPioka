@@ -1,29 +1,57 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-type Onglet = 'tableau' | 'billets' | 'roles' | 'classement'
-
-const ONGLETS: { cle: Onglet; label: string; chemin: string }[] = [
-  { cle: 'tableau', label: 'Tableau', chemin: '' },
-  { cle: 'billets', label: 'Billets', chemin: '/billets' },
-  { cle: 'roles', label: 'Rôles', chemin: '/roles' },
-  { cle: 'classement', label: 'Classement', chemin: '/classement' },
+const ONGLETS = [
+  { label: 'Tâches', chemin: '', aussi: ['/tache/', '/taches'] },
+  { label: 'Rôles', chemin: '/roles', aussi: [] },
+  { label: 'Billets', chemin: '/billets', aussi: [] },
+  { label: 'Classement', chemin: '/classement', aussi: [] },
 ]
 
-/** Navigation interne à un CAP : on reste dans le même projet. */
-export function OngletsProjet({ projectId, actif }: { projectId: string; actif: Onglet }) {
+/**
+ * Onglets d'un CAP, collés en haut de l'écran pendant qu'on fait défiler :
+ * on sait toujours dans quelle partie du CAP on se trouve.
+ */
+export function OngletsProjet({ projectId }: { projectId: string }) {
+  const chemin = usePathname()
+  const racine = `/cap/${projectId}`
+
+  const actif = (o: (typeof ONGLETS)[number]) =>
+    o.chemin === ''
+      ? chemin === racine || o.aussi.some((a) => chemin.startsWith(racine + a))
+      : chemin.startsWith(racine + o.chemin)
+
   return (
-    <nav className="flex gap-1 rounded-lg border border-trait bg-carte p-1">
-      {ONGLETS.map((onglet) => (
-        <Link
-          key={onglet.cle}
-          href={`/cap/${projectId}${onglet.chemin}`}
-          className={`panneau flex-1 rounded px-2 py-1.5 text-center text-xs ${
-            onglet.cle === actif ? 'bg-bouton text-sur-bouton' : 'text-encre-douce'
-          }`}
-        >
-          {onglet.label}
-        </Link>
-      ))}
+    <nav
+      aria-label="Parties du CAP"
+      className="sticky top-0 z-10 -mx-4 border-b border-trait bg-surface/95 px-4 backdrop-blur"
+    >
+      <ul className="flex">
+        {ONGLETS.map((o) => {
+          const on = actif(o)
+          return (
+            <li key={o.label} className="flex-1">
+              <Link
+                href={racine + o.chemin}
+                aria-current={on ? 'page' : undefined}
+                className={`panneau relative block py-3 text-center text-[11px] transition-colors ${
+                  on ? 'text-accent' : 'text-encre-douce hover:text-encre'
+                }`}
+              >
+                {o.label}
+                <span
+                  aria-hidden
+                  className={`absolute inset-x-3 bottom-0 h-0.5 rounded-full transition-colors ${
+                    on ? 'bg-accent' : 'bg-transparent'
+                  }`}
+                />
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
     </nav>
   )
 }

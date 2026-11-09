@@ -17,11 +17,13 @@ async function main() {
   rmSync(join(process.cwd(), 'e2e/uploads'), { recursive: true, force: true })
 
   const env = { ...process.env, DATABASE_URL: DB_URL }
-  execFileSync('node_modules/.bin/prisma', ['db', 'push', '--skip-generate', '--accept-data-loss'], {
+  // Les CLI sont lancés avec node : les raccourcis de node_modules/.bin sont
+  // des scripts shell que Windows ne sait pas exécuter directement.
+  execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate', '--accept-data-loss'], {
     env,
     stdio: 'ignore',
   })
-  execFileSync('node_modules/.bin/tsx', ['prisma/seed.ts'], {
+  execFileSync(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'prisma/seed.ts'], {
     env: { ...env, SUPER_ADMIN_USERNAME: 'admin', SUPER_ADMIN_PASSWORD: 'admin-mdp-2027' },
     stdio: 'ignore',
   })

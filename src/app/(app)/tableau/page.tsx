@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { MurDeBillets } from '@/components/MurDeBillets'
 import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
@@ -11,12 +12,12 @@ export default async function TableauPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="panneau-titre text-3xl">Le tableau</h1>
-        <p className="text-sm text-encre-douce">
-          Le tableau d’affichage de la caravane : idées, rappels, listes. Chacun écrit, chacun gère ses billets.
-        </p>
-      </header>
+      <PageHeader
+        picto="drapeau"
+        surtitre="La caravane"
+        titre="Le tableau"
+        description="Idées, rappels, listes : chacun écrit, chacun gère ses billets."
+      />
 
       <MurDeBillets
         notes={notes}

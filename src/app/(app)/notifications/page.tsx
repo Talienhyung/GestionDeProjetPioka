@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import Link from 'next/link'
 import { ActionButton } from '@/components/ActionButton'
 import { requireUser } from '@/lib/auth/guard'
@@ -12,14 +13,20 @@ export default async function NotificationsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex items-center justify-between gap-3">
-        <h1 className="panneau-titre text-3xl">Notifications</h1>
-        {nonLues > 0 ? (
-          <ActionButton action={markAllReadAction} className="rounded-lg border border-trait px-3 py-2 text-sm">
-            Tout marquer comme lu
-          </ActionButton>
-        ) : null}
-      </header>
+      <PageHeader
+        picto="cloche"
+        surtitre="Pour toi"
+        titre="Notifications"
+        retour={{ href: '/accueil', label: 'Accueil' }}
+        description={nonLues > 0 ? `${nonLues} non lue${nonLues > 1 ? 's' : ''}` : 'Tout est lu.'}
+        action={
+          nonLues > 0 ? (
+            <ActionButton action={markAllReadAction} className="rounded-full border border-trait bg-carte px-3 py-1.5 text-xs">
+              Tout lire
+            </ActionButton>
+          ) : null
+        }
+      />
 
       {notifications.length === 0 ? (
         <p className="text-sm text-encre-douce">Rien pour l&apos;instant.</p>

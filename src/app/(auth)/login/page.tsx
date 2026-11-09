@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { loginAction } from './actions'
+import { Picto } from '@/components/sgdf/Picto'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 
 export default function LoginPage() {
@@ -10,9 +11,9 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
       <header className="text-center">
-        <p className="text-5xl">⛺</p>
-        <h1 className="mt-2 text-2xl font-bold">Notre CAP</h1>
-        <p className="text-sm text-encre-douce">Caravane Pionniers-Caravelles</p>
+        <Picto nom="tente" taille={64} className="mx-auto text-accent" />
+        <h1 className="brush mt-3 text-5xl text-accent">Notre CAP</h1>
+        <p className="panneau text-xs text-encre-douce">Caravane Pionniers-Caravelles</p>
       </header>
 
       <form action={action} className="flex flex-col gap-4">

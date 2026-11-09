@@ -2,7 +2,6 @@ import { ActionButton } from '@/components/ActionButton'
 import { NewTaskForm } from '@/components/NewTaskForm'
 import { TemplateForm } from '@/components/TemplateForm'
 import { notFound } from 'next/navigation'
-import { OngletsProjet } from '@/components/OngletsProjet'
 import { requireChef } from '@/lib/auth/guard'
 import { getVisibleProject } from '@/lib/services/projectService'
 import { db } from '@/lib/db'
@@ -23,11 +22,7 @@ export default async function TachesPage({ params }: { params: Promise<{ project
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="panneau-titre text-3xl">Créer des tâches</h1>
-        <p className="text-sm text-encre-douce">{projet.title}</p>
-      </header>
-      <OngletsProjet projectId={projet.id} actif="tableau" />
+      <h2 className="panneau-titre text-2xl">Créer des tâches</h2>
 
       <section>
         <h2 className="panneau-titre mb-2 text-lg">Nouvelle tâche</h2>
