@@ -1,45 +1,36 @@
 /**
- * Prépare la base des tests bout en bout : schéma neuf, amorçage habituel,
- * puis les comptes et le CAP du scénario. Toujours reparti de zéro.
+ * Prépare les données des tests bout en bout : fichier neuf, amorçage
+ * habituel, puis les comptes et le CAP du scénario. Toujours reparti de zéro.
  */
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
-import { PrismaClient } from '@prisma/client'
+import { FileBackend } from '../../src/lib/data/backend'
+import { createDb } from '../../src/lib/data/client'
 import { hashPassword } from '../../src/lib/auth/password'
 
-/** Base dédiée aux tests bout en bout, sur le serveur PostgreSQL de dev. */
-const DB_URL = (() => {
-  const url = new URL(process.env.TEST_DATABASE_URL ?? 'postgresql://cap:cap@localhost:5432/cap')
-  url.pathname = '/cap_e2e'
-  return url.toString()
-})()
+/** Fichier de données dédié aux tests bout en bout (le même que playwright.config.ts). */
+const E2E_DATA_FILE = join(process.cwd(), 'e2e/.data/cap.json')
 
 async function main() {
   rmSync(join(process.cwd(), 'e2e/uploads'), { recursive: true, force: true })
+  rmSync(join(process.cwd(), 'e2e/.data'), { recursive: true, force: true })
 
-  // Repartir de zéro : la base e2e est supprimée puis recréée.
-  const adminUrl = new URL(DB_URL)
-  adminUrl.pathname = '/postgres'
-  const admin = new PrismaClient({ datasourceUrl: adminUrl.toString() })
-  await admin.$executeRawUnsafe('DROP DATABASE IF EXISTS "cap_e2e" WITH (FORCE)')
-  await admin.$executeRawUnsafe('CREATE DATABASE "cap_e2e"')
-  await admin.$disconnect()
-
-  const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL }
-  // Les CLI sont lancés avec node : les raccourcis de node_modules/.bin sont
-  // des scripts shell que Windows ne sait pas exécuter directement.
-  execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate', '--accept-data-loss'], {
-    env,
-    stdio: 'ignore',
-  })
+  // tsx est lancé avec node : les raccourcis de node_modules/.bin sont des
+  // scripts shell que Windows ne sait pas exécuter directement.
   execFileSync(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'prisma/seed.ts'], {
-    env: { ...env, SUPER_ADMIN_USERNAME: 'admin', SUPER_ADMIN_PASSWORD: 'admin-mdp-2027' },
+    env: {
+      ...process.env,
+      DATA_FILE: E2E_DATA_FILE,
+      DYNAMODB_TABLE: '',
+      SUPER_ADMIN_USERNAME: 'admin',
+      SUPER_ADMIN_PASSWORD: 'admin-mdp-2027',
+    },
     stdio: 'ignore',
   })
 
-  const db = new PrismaClient({ datasourceUrl: DB_URL })
+  const db = createDb(new FileBackend(E2E_DATA_FILE))
 
   const compte = async (username: string, displayName: string, role: string, motDePasse: string, doitChanger: boolean) =>
     db.user.create({
@@ -102,8 +93,7 @@ async function main() {
     .jpeg()
     .toFile(join(process.cwd(), 'e2e/fixtures/photo.jpg'))
 
-  await db.$disconnect()
-  console.log('Base e2e prête.')
+  console.log('Données e2e prêtes.')
 }
 
 main().catch((error) => {

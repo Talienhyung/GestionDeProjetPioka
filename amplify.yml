@@ -1,15 +1,15 @@
 # Build AWS Amplify Hosting (SSR, Next.js 15).
 #
 # Variables à définir dans la console Amplify (Hosting > Environment variables) :
-#   DATABASE_URL          PostgreSQL via pooler (Neon « pooled », RDS Proxy…)
-#   DIRECT_URL            PostgreSQL en direct, pour les migrations
-#   S3_BUCKET             bucket privé des photos
-#   S3_REGION             région du bucket (ex. eu-west-3)
-#   SUPER_ADMIN_USERNAME  identifiant du super admin (facultatif, « admin »)
-#   SUPER_ADMIN_PASSWORD  mot de passe initial du super admin (premier build)
+#   DYNAMODB_TABLE    table DynamoDB des données (ex. notre-cap)
+#   DYNAMODB_REGION   région de la table (ex. eu-west-3)
+#   S3_BUCKET         bucket privé des photos
+#   S3_REGION         région du bucket (ex. eu-west-3)
 #
-# Les accès S3 passent par le rôle de calcul SSR de l'app (IAM), pas par des
-# clés d'accès. Voir docs/deploiement-amplify.md.
+# Les accès DynamoDB et S3 passent par le rôle de calcul SSR de l'app (IAM),
+# pas par des clés d'accès. Aucune base à migrer : l'amorçage (badges,
+# catalogue, super admin) se lance une fois depuis un poste, voir
+# docs/deploiement-amplify.md.
 version: 1
 frontend:
   phases:
@@ -21,14 +21,9 @@ frontend:
     build:
       commands:
         # Le serveur Next.js d'Amplify ne voit pas les variables de la console :
-        # on recopie dans .env.production uniquement celles dont il a besoin
-        # à l'exécution. Le mot de passe du super admin n'y figure pas.
-        - env | grep -E '^(DATABASE_URL|DIRECT_URL|S3_BUCKET|S3_REGION)=' >> .env.production
+        # on recopie dans .env.production celles dont il a besoin à l'exécution.
+        - env | grep -E '^(DYNAMODB_TABLE|DYNAMODB_REGION|S3_BUCKET|S3_REGION)=' >> .env.production
         - npx prisma generate
-        # Migrations puis amorçage idempotent (badges, catalogue, super admin
-        # s'il n'existe pas encore). Un échec arrête le déploiement.
-        - npx prisma migrate deploy
-        - npx prisma db seed
         - npm run build
   artifacts:
     baseDirectory: .next

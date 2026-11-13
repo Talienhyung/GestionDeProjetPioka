@@ -9,9 +9,12 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1168.0",
     "@aws-sdk/client-s3": "^3.1168.0",
     "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.19.3",

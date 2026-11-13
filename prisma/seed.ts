@@ -1,7 +1,10 @@
-import { PrismaClient } from '@prisma/client'
+/**
+ * Amorçage idempotent : badges, catalogue de tâches, super admin s'il n'existe
+ * pas, premier CAP. Écrit là où pointe l'environnement : DynamoDB si
+ * DYNAMODB_TABLE est défini, sinon le fichier local (DATA_FILE).
+ */
+import { db as prisma } from '../src/lib/db'
 import { hashPassword } from '../src/lib/auth/password'
-
-const prisma = new PrismaClient()
 
 const BADGES = [
   { code: 'premier_pas', name: 'Premier pas', description: 'Ta toute première tâche validée.', icon: '🌱', ruleType: 'TACHES_VALIDEES', threshold: 1, points: 5, sortOrder: 1 },
@@ -77,10 +80,7 @@ async function main() {
   }
 }
 
-main()
-  .then(() => prisma.$disconnect())
-  .catch(async (error) => {
-    console.error(error)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

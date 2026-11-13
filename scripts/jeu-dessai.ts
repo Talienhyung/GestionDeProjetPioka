@@ -2,10 +2,8 @@
  * Jeu d'essai pour un test manuel en local : comptes, CAP, tâches, rôles.
  * À lancer avec `npx tsx scripts/jeu-dessai.ts`. Ne sert qu'au développement.
  */
-import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/lib/auth/password'
-
-const db = new PrismaClient()
+import { db } from '../src/lib/db'
 
 async function compte(username: string, displayName: string, role: string, motDePasse: string) {
   const passwordHash = await hashPassword(motDePasse)
@@ -130,11 +128,10 @@ async function main() {
   })
 
   console.log('Jeu d’essai prêt.')
-  await db.$disconnect()
+
 }
 
-main().catch(async (error) => {
+main().catch((error) => {
   console.error(error)
-  await db.$disconnect()
   process.exit(1)
 })

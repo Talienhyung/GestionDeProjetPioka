@@ -1,17 +1,16 @@
+// Ce schéma décrit le modèle et génère les types TypeScript. Les données ne
+// passent pas par le moteur Prisma : elles vivent dans DynamoDB (Amplify) ou
+// dans un fichier JSON (poste, Docker), via src/lib/data/. Aucune migration :
+// un champ ajouté ici avec une valeur par défaut s'applique tout seul aux
+// nouveaux enregistrements (les anciens reçoivent null à la lecture).
 generator client {
-  provider      = "prisma-client-js"
-  // rhel-openssl-3.0.x : le moteur des fonctions de calcul d'Amplify Hosting
-  // (Amazon Linux, Node 20+). « native » couvre le poste et l'image Docker.
-  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
+// Requis par Prisma pour générer le client ; jamais utilisé pour se connecter.
 datasource db {
-  provider  = "postgresql"
-  // Adresse utilisée par le site : de préférence un pooler (Neon, RDS Proxy),
-  // les fonctions serverless ouvrant beaucoup de connexions courtes.
-  url       = env("DATABASE_URL")
-  // Connexion directe, sans pooler, pour les migrations.
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = "postgresql://non-utilise@localhost/cap"
 }
 
 model User {

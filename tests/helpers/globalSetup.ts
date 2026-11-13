@@ -1,6 +1,10 @@
-import { ensureTemplate } from './db'
+import { dynamoClient, ensureTable } from '@/lib/data/dynamoBackend'
 
-/** Construit une fois pour toute la session la base gabarit des tests. */
+/**
+ * Avec TEST_DYNAMODB_TABLE, crée la table de test (DynamoDB Local) si elle
+ * manque. Sans, rien à préparer : les tests tournent en mémoire.
+ */
 export default async function setup() {
-  await ensureTemplate()
+  const table = process.env.TEST_DYNAMODB_TABLE
+  if (table) await ensureTable(dynamoClient(), table)
 }

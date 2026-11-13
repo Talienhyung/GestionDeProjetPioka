@@ -53,3 +53,7 @@ sauvegardes/
 test-results/
 playwright-report/
 e2e/uploads/
+
+# données locales (fichier JSON)
+.data/
+e2e/.data/
