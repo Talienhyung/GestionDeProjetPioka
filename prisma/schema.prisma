@@ -22,6 +22,9 @@ model User {
   mustChangePassword Boolean  @default(true)
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
+  /// Le groupe (équipe) du jeune ; un seul à la fois.
+  groupeId           String?
+  groupe             Groupe?  @relation(fields: [groupeId], references: [id], onDelete: SetNull)
 
   sessions         Session[]
   assignments      TaskAssignment[]
@@ -201,6 +204,10 @@ model UserBadge {
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id])
   earnedAt  DateTime @default(now())
+  /// Remis à la main par un chef : pourquoi, en ses mots. Null pour un badge gagné par sa règle.
+  reason      String?
+  /// Le chef qui l'a remis (sans relation : le badge survit à la suppression du compte du chef).
+  awardedById String?
 
   @@unique([userId, badgeId])
 }
@@ -218,6 +225,9 @@ model PointsEntry {
   projectRoleId String?
   badgeId       String?
   submissionId  String?
+  /// Points donnés à la main : la raison, écrite par le chef.
+  note          String?
+  awardedById   String?
   createdAt     DateTime @default(now())
 
   @@unique([userId, submissionId])
@@ -323,4 +333,14 @@ model EventRole {
   projectRole   ProjectRole @relation(fields: [projectRoleId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, projectRoleId])
+}
+
+/// Un groupe de jeunes (équipe) : les chefs les composent, chaque jeune en a un au plus.
+model Groupe {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  /// Couleur du groupe, #rrggbb.
+  color     String?
+  createdAt DateTime @default(now())
+  membres   User[]
 }

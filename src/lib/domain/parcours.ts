@@ -37,6 +37,8 @@ export interface LignePoints {
   taskId: string | null
   projectRoleId: string | null
   badgeId: string | null
+  /** Points donnés à la main : la raison du chef. */
+  note?: string | null
 }
 
 export interface DonneesParcours {
@@ -45,7 +47,7 @@ export interface DonneesParcours {
   aVenir: { id: string; title: string; location: string; description?: string; startsAt: Date } | null
   taches: { id: string; projectId: string; title: string; projectTitle: string; validatedAt: Date }[]
   roles: { id: string; name: string; projectTitle: string; closedAt: Date }[]
-  badges: { id: string; name: string; description: string; earnedAt: Date }[]
+  badges: { id: string; name: string; description: string; earnedAt: Date; reason?: string | null }[]
   boulots: { id: string; title: string; doneOn: Date }[]
   points: LignePoints[]
 }
@@ -132,7 +134,7 @@ export function construireParcours(d: DonneesParcours, maintenant = new Date()):
       genre: 'BADGE',
       date: b.earnedAt,
       titre: b.name,
-      detail: b.description || null,
+      detail: b.reason ? `« ${b.reason} »` : b.description || null,
       points: parBadge.get(b.id) ?? 0,
       lien: '/profil',
       badgeId: b.id,
@@ -158,7 +160,7 @@ export function construireParcours(d: DonneesParcours, maintenant = new Date()):
       genre: 'BONUS',
       date: p.createdAt,
       titre: p.amount > 0 ? 'Points en bonus' : 'Points retirés',
-      detail: null,
+      detail: p.note ? `« ${p.note} »` : null,
       points: p.amount,
       lien: null,
     })
