@@ -1,115 +1,80 @@
 # Déployer sur AWS Amplify Hosting
 
-Amplify héberge le site Next.js sur des fonctions serverless : rien n'est gardé
-sur le disque entre deux requêtes. La base vit donc dans un **PostgreSQL géré**
-et les photos dans un **bucket S3 privé**.
+Le site tourne en serverless sur Amplify, avec trois ressources facturées à
+l'usage, donc quelques centimes par mois pour une caravane, et rien quand
+personne ne s'en sert :
 
-Ordre conseillé : base, bucket, rôle IAM, puis application Amplify.
+| Ressource | Rôle |
+|---|---|
+| Table **DynamoDB** (à la requête) | toutes les données du site |
+| Bucket **S3** privé | les photos des travaux rendus |
+| Rôle **IAM** de calcul | donne au serveur Amplify l'accès à ces deux-là, sans clé d'accès |
 
-## 1. La base PostgreSQL
+Il n'y a ni base à administrer, ni migration : un champ ajouté au schéma Prisma
+avec une valeur par défaut s'applique tout seul.
 
-Deux choix raisonnables, en Europe :
+## Déploiement en place
 
-- **Neon** (offre gratuite suffisante pour une caravane) : crée un projet en
-  région `eu-central-1` (Francfort). Copie deux adresses depuis *Connection
-  details* :
-  - **pooled** (l'hôte contient `-pooler`) → `DATABASE_URL`, en ajoutant
-    `&pgbouncer=true&connection_limit=1` à la fin ;
-  - **direct** (sans `-pooler`) → `DIRECT_URL`.
-- **Amazon RDS for PostgreSQL** (`db.t4g.micro`, Postgres 16, région
-  `eu-west-3` Paris) : accès public activé et groupe de sécurité ouvert sur le
-  port 5432, Amplify n'ayant pas d'IP fixe. Mets la même adresse dans
-  `DATABASE_URL` et `DIRECT_URL`, avec `?sslmode=require`.
+- Région : `eu-west-3` (Paris)
+- Dépôt connecté : `HBwilliam/GestionDeProjetPioka`, branche `amplify`
+  (chaque push redéploie)
+- App Amplify `notre-cap` (`d36e94q7y1sv9p`) :
+  <https://amplify.d36e94q7y1sv9p.amplifyapp.com>
+- Table `notre-cap`, bucket `notre-cap-photos-694294576234`,
+  rôle `notre-cap-amplify-compute`
 
-Les fonctions serverless ouvrent beaucoup de connexions courtes : avec RDS,
-garde `connection_limit=1` dans `DATABASE_URL`, ou passe par RDS Proxy.
+## Refaire l'installation de zéro
 
-## 2. Le bucket des photos
+Toutes les commandes utilisent la CLI AWS connectée (`aws login`).
 
-Console S3, **Create bucket** :
+1. **Table DynamoDB** (clés `pk`/`sk`, facturation à la requête) :
 
-- nom : par exemple `notre-cap-photos` ; région : `eu-west-3` ;
-- **Block all public access** : coché (les photos de mineurs ne sont jamais
-  publiques ; le site les sert lui-même, après contrôle de la session) ;
-- **Bucket Versioning** : activé (c'est la sauvegarde des photos) ;
-- chiffrement par défaut SSE-S3 : laissé tel quel.
+   ```bash
+   eval "$(aws configure export-credentials --format env)"
+   DYNAMODB_TABLE=notre-cap DYNAMODB_REGION=eu-west-3 npx tsx scripts/creer-table.ts
+   aws dynamodb update-continuous-backups --region eu-west-3 --table-name notre-cap \
+     --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
+   aws dynamodb update-table --region eu-west-3 --table-name notre-cap --deletion-protection-enabled
+   ```
 
-## 3. Le rôle de calcul SSR (IAM)
+2. **Bucket S3** : accès public entièrement bloqué, versioning activé, les
+   anciennes versions purgées après 30 jours. Chiffrement SSE-S3 par défaut.
 
-Le site accède au bucket avec un rôle, sans clé d'accès.
+3. **Rôle IAM** approuvé par `amplify.amazonaws.com`, avec une seule politique :
+   - `dynamodb:Query`, `GetItem`, `PutItem`, `DeleteItem`, `UpdateItem`,
+     `ConditionCheckItem`, `DescribeTable` sur la table ;
+   - `s3:PutObject`, `GetObject`, `DeleteObject` sur `arn:aws:s3:::<bucket>/photos/*`.
 
-IAM → **Roles** → **Create role** → *Custom trust policy* :
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": { "Service": "amplify.amazonaws.com" },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-```
-
-Puis une stratégie en ligne, limitée au bucket :
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::notre-cap-photos/photos/*"
-    }
-  ]
-}
-```
-
-Nomme le rôle par exemple `notre-cap-ssr`.
-
-## 4. L'application Amplify
-
-1. Amplify → **Create new app** → GitHub → dépôt `GestionDeProjetPioka`,
-   branche **`amplify`**.
-2. Amplify détecte Next.js (SSR) et reprend `amplify.yml` du dépôt : ne change
-   pas les commandes de build.
-3. **Environment variables** (avant le premier build) :
+4. **App Amplify** connectée au dépôt, plateforme *Web compute* (SSR), le rôle
+   ci-dessus comme **rôle de calcul**, et ces variables d'environnement :
 
    | Variable | Valeur |
    |---|---|
-   | `DATABASE_URL` | adresse via pooler (étape 1) |
-   | `DIRECT_URL` | adresse directe (étape 1) |
-   | `S3_BUCKET` | `notre-cap-photos` |
+   | `DYNAMODB_TABLE` | `notre-cap` |
+   | `DYNAMODB_REGION` | `eu-west-3` |
+   | `S3_BUCKET` | le nom du bucket |
    | `S3_REGION` | `eu-west-3` |
-   | `SUPER_ADMIN_USERNAME` | `admin` (facultatif) |
-   | `SUPER_ADMIN_PASSWORD` | un mot de passe solide, provisoire |
 
-   Pas de variable `AWS_…` : Amplify réserve ce préfixe, et les accès S3
-   passent par le rôle.
-4. **App settings → IAM roles → Compute role** : choisis `notre-cap-ssr`.
-5. Lance le déploiement. Le build applique les migrations, amorce la base
-   (badges, catalogue, super admin s'il n'existe pas), puis construit le site.
-6. **Custom domains** : ajoute ton domaine ; Amplify fournit le certificat
-   HTTPS (obligatoire : le cookie de session est `Secure`).
+   Le build suit `amplify.yml` : `npm ci`, `prisma generate` (types), `next build`.
 
-À la première connexion, le site demande au super admin de changer son mot de
-passe. Tu peux ensuite retirer `SUPER_ADMIN_PASSWORD` des variables : il ne
-sert qu'à créer le compte la première fois.
+5. **Amorçage**, une fois, depuis un poste : badges, catalogue de tâches,
+   premier CAP et super admin (mot de passe à changer à la première connexion).
 
-## Mises à jour
+   ```bash
+   DYNAMODB_TABLE=notre-cap DYNAMODB_REGION=eu-west-3 DATA_FILE= \
+     SUPER_ADMIN_PASSWORD='mot-de-passe-provisoire' npm run seed
+   ```
 
-Chaque push sur la branche `amplify` redéploie. Les migrations s'appliquent au
-build ; si l'une échoue, le déploiement s'arrête et l'ancienne version reste
-en ligne.
+   L'amorçage est idempotent : on peut le relancer sans rien écraser.
 
-## Limites à connaître
+## Sauvegardes
 
-- **Taille des envois** : les fonctions d'Amplify refusent les requêtes de plus
-  de ~6 Mo. Le navigateur réduit donc les photos (2000 px, JPEG) avant
-  l'envoi ; le serveur les réencode ensuite en WebP 1600 px.
-- **Démarrage à froid** : après un moment sans visite, la première page peut
-  mettre une à deux secondes.
-- **Logs** : CloudWatch, depuis l'onglet *Monitoring* de l'app Amplify.
+- DynamoDB : restauration à la seconde près sur les 35 derniers jours
+  (point-in-time recovery), depuis la console DynamoDB > Sauvegardes.
+- S3 : versioning, chaque photo remplacée ou supprimée reste récupérable 30 jours.
+
+## Limites
+
+Chaque lecture charge un modèle entier puis filtre en mémoire côté serveur.
+C'est rapide et quasi gratuit pour une caravane (quelques centaines de lignes
+par modèle). Ce n'est pas fait pour des dizaines de milliers de lignes.

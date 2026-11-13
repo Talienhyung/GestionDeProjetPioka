@@ -11,7 +11,8 @@ et des badges ; les chefs valident ou renvoient à corriger.
 
 Deux façons d'héberger le site, sur la même base de code :
 
-- **AWS Amplify Hosting** (serverless) : base PostgreSQL gérée, photos dans S3.
+- **AWS Amplify Hosting** (serverless) : données dans DynamoDB, photos dans S3,
+  facturé à l'usage (quelques centimes par mois pour une caravane).
   Pas à pas : [`docs/deploiement-amplify.md`](docs/deploiement-amplify.md).
 - **Ton propre serveur** avec Docker, décrit ci-dessous.
 
@@ -21,15 +22,12 @@ Prérequis : Docker et le plugin Compose.
 
 ```bash
 git clone <ton-dépôt> site-cap && cd site-cap
-cat > .env <<EOF
-SUPER_ADMIN_PASSWORD=choisis-un-mot-de-passe-solide
-POSTGRES_PASSWORD=un-autre-mot-de-passe-solide
-EOF
+echo "SUPER_ADMIN_PASSWORD=choisis-un-mot-de-passe-solide" > .env
 docker compose up -d --build
 ```
 
-Le site écoute sur le port 3000, sa base PostgreSQL tourne dans un second conteneur. Au premier démarrage, le conteneur applique les
-migrations, crée les 10 badges, les 22 tâches types du catalogue, un premier CAP
+Le site écoute sur le port 3000. Les données (un fichier `cap.json`) et les
+photos vivent sur le volume `cap-data`. Au premier démarrage, il crée les 10 badges, les 22 tâches types du catalogue, un premier CAP
 et le compte super admin (`admin` par défaut, `SUPER_ADMIN_USERNAME` pour en
 changer).
 
@@ -65,17 +63,17 @@ Un jeune qui oublie son mot de passe : un chef lui en génère un nouveau depuis
 sh scripts/backup.sh /chemin/vers/sauvegardes
 ```
 
-Copie cohérente de la base (`pg_dump`) et archive des photos, horodatées, avec
+Copie des données (`cap.json`) et archive des photos, horodatées, avec
 rotation sur les 30 dernières. À mettre dans cron :
 
 ```
 0 3 * * * /chemin/vers/site-cap/scripts/backup.sh /chemin/vers/sauvegardes
 ```
 
-Pour restaurer la base :
+Pour restaurer les données :
 
 ```bash
-docker compose exec -T db pg_restore -U cap -d cap --clean < sauvegardes/cap-AAAA-MM-JJ_HHMM.dump
+docker compose cp sauvegardes/cap-AAAAMMJJ-HHMMSS.json app:/data/cap.json && docker compose restart app
 ```
 
 ## Mise à jour
@@ -84,39 +82,45 @@ docker compose exec -T db pg_restore -U cap -d cap --clean < sauvegardes/cap-AAA
 git pull && docker compose up -d --build
 ```
 
-Les migrations s'appliquent automatiquement au démarrage.
+Pas de migration : un champ ajouté au schéma avec une valeur par défaut
+s'applique tout seul.
 
 ## Développement
 
-Node.js 20.19+, npm et Docker (pour la base PostgreSQL locale).
+Node.js 20.19+ et npm. Aucune base à installer : en local, les données vivent
+dans `.data/cap.json`.
 
 ```bash
 npm install
 cp .env.example .env
-docker compose -f docker-compose.dev.yml up -d   # PostgreSQL sur le port 5432
-npx prisma migrate dev
-npx prisma db seed
+npm run seed       # badges, catalogue, super admin, premier CAP
 npm run dev        # http://localhost:3000
 ```
 
-Les tests utilisent le même serveur PostgreSQL : chaque test d'intégration crée
-puis supprime sa propre base (`TEST_DATABASE_URL` pour viser un autre serveur).
+Les tests tournent en mémoire. Pour les rejouer contre DynamoDB Local :
+
+```bash
+docker run -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory
+TEST_DYNAMODB_TABLE=cap-test DYNAMODB_ENDPOINT=http://localhost:8000 \
+  AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local npm test
+```
 
 | Commande | Rôle |
 |---|---|
 | `npm test` | tests unitaires et d'intégration (Vitest) |
 | `npm run test:e2e` | parcours bout en bout (Playwright) |
 | `npm run build` | build de production (sortie standalone) |
-| `npx prisma studio` | inspecter la base |
+| `npm run seed` | amorçage idempotent (là où pointe l'environnement) |
 
 ### Organisation du code
 
 ```
 src/lib/domain/    règles pures : points, machine à états, badges, photos
-src/lib/services/  accès base ; chaque fonction reçoit le client Prisma et l'acteur
+src/lib/services/  accès aux données ; chaque fonction reçoit le client et l'acteur
+src/lib/data/      client de données au contrat de Prisma : DynamoDB, fichier, mémoire
 src/lib/auth/      mots de passe, sessions, gardes
 src/app/           pages et actions serveur (les actions ne font qu'appeler un service)
-prisma/            schéma, migrations, amorçage
+prisma/            schéma (types uniquement) et amorçage
 tests/ · e2e/      tests
 ```
 
