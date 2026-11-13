@@ -109,12 +109,21 @@ export function serialize(meta: ModelMeta, rec: Rec): Rec {
   return out
 }
 
-/** JSON stocké → enregistrement (dates rétablies). */
+/**
+ * JSON stocké → enregistrement (dates rétablies). Un champ absent (ajouté au
+ * schéma après l'écriture de l'enregistrement) prend sa valeur par défaut
+ * constante, sinon null : c'est ce qui dispense de migrations.
+ */
 export function revive(meta: ModelMeta, raw: Rec): Rec {
   const out: Rec = {}
   for (const f of meta.scalars) {
     const v = raw[f.name]
-    out[f.name] = f.type === 'DateTime' && typeof v === 'string' ? new Date(v) : (v ?? null)
+    if (v === undefined) {
+      const d = f.default
+      out[f.name] = d !== undefined && (typeof d !== 'object' || d === null) ? d : null
+      continue
+    }
+    out[f.name] = f.type === 'DateTime' && typeof v === 'string' ? new Date(v) : v
   }
   return out
 }

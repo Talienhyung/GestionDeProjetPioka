@@ -3,10 +3,13 @@ import type { Actor } from '@/lib/domain/types'
 import {
   archiveProject,
   createProject,
+  deleteProject,
+  deletionImpact,
   getVisibleProject,
   launchProject,
   listLiveProjects,
   listProjects,
+  setProjectCover,
 } from '@/lib/services/projectService'
 import { createTask } from '@/lib/services/taskService'
 import { createTestDb, type TestDb } from '../helpers/db'
@@ -94,5 +97,41 @@ describe('cycle de vie des CAP', () => {
 
   it('refuse la création de CAP à un jeune', async () => {
     await expect(createProject(t.prisma, lucie, { title: 'Mon projet' })).rejects.toThrow()
+  })
+
+  it('supprime un CAP et tout ce qu’il contient, et rend les images à effacer', async () => {
+    const projet = await createProject(t.prisma, chef, { title: 'Camp 2027', coverName: 'c'.repeat(32) + '.webp' })
+    const autre = await createProject(t.prisma, chef, { title: 'Autre CAP' })
+    const tache = await t.prisma.task.create({
+      data: { projectId: projet.id, title: 'Budget', phase: 'CHOISIR', difficulty: 'FACILE', status: 'EN_VALIDATION', createdById: chef.id },
+    })
+    await t.prisma.taskAssignment.create({ data: { taskId: tache.id, userId: lucie.id } })
+    const rendu = await t.prisma.submission.create({ data: { taskId: tache.id, submittedById: lucie.id, message: 'fait' } })
+    await t.prisma.attachment.create({
+      data: { submissionId: rendu.id, storedName: 'd'.repeat(32) + '.webp', originalName: 'p.jpg', mimeType: 'image/webp', sizeBytes: 1, width: 1, height: 1, uploadedById: lucie.id },
+    })
+    await t.prisma.pointsEntry.create({ data: { userId: lucie.id, projectId: projet.id, amount: 5, reason: 'BONUS' } })
+    const badge = await t.prisma.badge.create({ data: { code: 'b', name: 'B', description: '', icon: '', ruleType: 'TACHES_VALIDEES' } })
+    await t.prisma.userBadge.create({ data: { userId: lucie.id, badgeId: badge.id, projectId: projet.id } })
+
+    expect(await deletionImpact(t.prisma, projet.id)).toEqual({ taches: 1, points: 1, roles: 0, billets: 0 })
+    await expect(deleteProject(t.prisma, lucie, projet.id)).rejects.toThrow()
+
+    const fichiers = await deleteProject(t.prisma, chef, projet.id)
+    expect(fichiers.sort()).toEqual(['c'.repeat(32) + '.webp', 'd'.repeat(32) + '.webp'])
+    expect(await t.prisma.project.findUnique({ where: { id: projet.id } })).toBeNull()
+    expect(await t.prisma.task.count()).toBe(0)
+    expect(await t.prisma.attachment.count()).toBe(0)
+    expect(await t.prisma.pointsEntry.count()).toBe(0)
+    // L'écusson reste au jeune, il ne pointe simplement plus vers ce CAP.
+    expect(await t.prisma.userBadge.findFirst()).toMatchObject({ projectId: null })
+    expect(await t.prisma.project.findUnique({ where: { id: autre.id } })).not.toBeNull()
+  })
+
+  it('change la couverture et rend l’ancienne', async () => {
+    const projet = await createProject(t.prisma, chef, { title: 'Camp 2027' })
+    expect(await setProjectCover(t.prisma, chef, projet.id, 'e'.repeat(32) + '.webp')).toBeNull()
+    expect(await setProjectCover(t.prisma, chef, projet.id, null)).toBe('e'.repeat(32) + '.webp')
+    await expect(setProjectCover(t.prisma, lucie, projet.id, null)).rejects.toThrow()
   })
 })

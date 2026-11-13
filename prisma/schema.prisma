@@ -58,6 +58,8 @@ model Project {
   status        String        @default("EN_COURS")
   startedAt     DateTime      @default(now())
   archivedAt    DateTime?
+  /// Image de couverture (nom stocké, WebP 16:9), ou null.
+  coverName     String?
   tasks         Task[]
   roles         ProjectRole[]
   pointsEntries PointsEntry[]
@@ -179,6 +181,14 @@ model Badge {
   threshold   Int         @default(1)
   points      Int         @default(0)
   sortOrder   Int         @default(0)
+  /// Pictogramme SGDF (clé du catalogue public/pictos), ou null.
+  pictoKey    String?
+  /// Image envoyée par un admin (nom stocké, WebP carré), prioritaire sur le picto.
+  imageName   String?
+  /// Couleur de fond de l'écusson, #rrggbb.
+  color       String?
+  /// Niveau I à V : la bordure de l'écusson s'enrichit avec le niveau.
+  level       Int         @default(1)
   userBadges  UserBadge[]
 }
 

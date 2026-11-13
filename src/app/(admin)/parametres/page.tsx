@@ -1,10 +1,12 @@
 import { PageHeader } from '@/components/PageHeader'
 import { ScaleForm } from '@/components/ScaleForm'
 import { StretchGoalsForm } from '@/components/StretchGoalsForm'
-import { BadgePicto, teinteBadge } from '@/components/sgdf/BadgePicto'
+import Link from 'next/link'
+import { Ecusson } from '@/components/Ecusson'
 import { requireSuperAdmin } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { getScale, getStretchGoals } from '@/lib/services/settingsService'
+import { apparenceBadge } from '@/lib/ui/apparenceBadge'
 
 export default async function ParametresPage() {
   await requireSuperAdmin()
@@ -36,24 +38,20 @@ export default async function ParametresPage() {
       </section>
 
       <section>
-        <h2 className="panneau-titre mb-2 text-lg">Badges</h2>
-        <ul className="flex flex-col gap-2">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="panneau-titre text-lg">Badges</h2>
+          <Link href="/badges" className="panneau text-xs text-accent underline">
+            Gérer les badges
+          </Link>
+        </div>
+        <Link
+          href="/badges"
+          className="flex flex-wrap gap-3 rounded-xl border border-trait bg-carte p-4 hover:border-encre-douce"
+        >
           {badges.map((badge) => (
-            <li key={badge.id} className="flex items-center gap-3 rounded-xl border border-trait bg-carte p-3 text-sm">
-              <span className={`grid size-10 shrink-0 place-items-center rounded-full ${teinteBadge(badge.sortOrder)}`}>
-                <BadgePicto code={badge.code} icon={badge.icon} taille={22} />
-              </span>
-              <span className="flex-1">
-                <strong>{badge.name}</strong>
-                <span className="block text-encre-douce">{badge.description}</span>
-              </span>
-              <span className="shrink-0 text-right text-encre-douce">
-                seuil {badge.threshold}
-                <span className="block">{badge.points} pts</span>
-              </span>
-            </li>
+            <Ecusson key={badge.id} {...apparenceBadge(badge)} taille={44} ruban={false} />
           ))}
-        </ul>
+        </Link>
       </section>
     </div>
   )

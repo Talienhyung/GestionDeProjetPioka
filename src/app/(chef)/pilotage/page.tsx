@@ -1,15 +1,18 @@
 import { PageHeader } from '@/components/PageHeader'
 import Link from 'next/link'
 import { ActionButton } from '@/components/ActionButton'
+import { CouvertureForm } from '@/components/CouvertureForm'
 import { NewProjectForm } from '@/components/NewProjectForm'
+import { SupprimerCap } from '@/components/SupprimerCap'
 import { ProgressBar } from '@/components/ProgressBar'
 import { requireChef } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { PHASES, type Phase } from '@/lib/domain/types'
-import { listProjects } from '@/lib/services/projectService'
+import { deletionImpact, listProjects } from '@/lib/services/projectService'
 import { listBoard } from '@/lib/services/taskService'
+import { couvertureUrl } from '@/lib/ui/apparenceBadge'
 import { PHASE_STYLES, phaseProgress } from '@/lib/ui/phases'
-import { archiveAction, launchAction, setPhaseAction } from './actions'
+import { archiveAction, deleteAction, launchAction, setPhaseAction } from './actions'
 
 export default async function PilotagePage() {
   await requireChef()
@@ -22,6 +25,28 @@ export default async function PilotagePage() {
         return [projet.id, phaseProgress(PHASES.flatMap((phase) => board[phase]))] as const
       }),
     ),
+  )
+
+  const impacts = Object.fromEntries(
+    await Promise.all(projets.map(async (projet) => [projet.id, await deletionImpact(db, projet.id)] as const)),
+  )
+
+  /** Couverture et suppression : rangées sous un dépli, pour ne pas les avoir sous le pouce. */
+  const gerer = (projet: (typeof projets)[number]) => (
+    <details className="mt-3 border-t border-trait pt-2">
+      <summary className="panneau cursor-pointer text-[11px] text-encre-douce">Couverture et suppression</summary>
+      <div className="mt-3 flex flex-col gap-3">
+        <CouvertureForm projectId={projet.id} actuelle={couvertureUrl(projet)} />
+        <div className="flex justify-end">
+          <SupprimerCap
+            titre={projet.title}
+            impact={impacts[projet.id]}
+            archiver={projet.status === 'ARCHIVE' ? null : archiveAction.bind(null, projet.id)}
+            supprimer={deleteAction.bind(null, projet.id)}
+          />
+        </div>
+      </div>
+    </details>
   )
 
   const parEtat = {
@@ -86,6 +111,7 @@ export default async function PilotagePage() {
                   Archiver
                 </ActionButton>
               </div>
+              {gerer(projet)}
             </article>
           ))}
         </div>
@@ -121,6 +147,7 @@ export default async function PilotagePage() {
                   Lancer le CAP
                 </ActionButton>
               </div>
+              {gerer(projet)}
             </article>
           ))}
         </div>
@@ -140,13 +167,14 @@ export default async function PilotagePage() {
           <h2 className="panneau mb-2 text-sm text-encre-douce">Archivés ({parEtat.ARCHIVE.length})</h2>
           <ul className="flex flex-col gap-2">
             {parEtat.ARCHIVE.map((projet) => (
-              <li key={projet.id}>
-                <Link href={`/cap/${projet.id}`} className="block rounded-lg border border-trait p-3 text-sm">
-                  <span className="panneau-titre text-base">{projet.title}</span>
+              <li key={projet.id} className="rounded-lg border border-trait p-3 text-sm">
+                <Link href={`/cap/${projet.id}`} className="block">
+                  <span className="panneau-titre text-base underline">{projet.title}</span>
                   <span className="block text-xs text-encre-douce">
                     archivé le {projet.archivedAt?.toLocaleDateString('fr-FR')}
                   </span>
                 </Link>
+                {gerer(projet)}
               </li>
             ))}
           </ul>

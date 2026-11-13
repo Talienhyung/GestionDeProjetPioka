@@ -237,3 +237,152 @@ select {
   background-image: radial-gradient(color-mix(in oklab, var(--encre) 14%, transparent) 1px, transparent 1.2px);
   background-size: 14px 14px;
 }
+
+/* ── Écussons : cinq niveaux, la bordure s'enrichit ─────────────────────────
+   --s : taille ; --fond : couleur de l'écusson ; --encre : couleur du picto. */
+.ecusson {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--s);
+  height: var(--s);
+  flex-shrink: 0;
+  isolation: isolate;
+}
+.ecusson-coeur {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--fond);
+  color: var(--encre);
+  box-shadow: 0 2px 6px rgb(0 58 93 / 0.25);
+}
+/* Point de couture, à l'intérieur du bord : un écusson cousu main. */
+.ecusson-coeur::after {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  border: max(1.5px, calc(var(--s) * 0.025)) dashed rgb(255 255 255 / 0.6);
+  pointer-events: none;
+}
+.ecusson-coeur > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ecusson::before,
+.ecusson::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+.ecusson-ruban {
+  position: absolute;
+  z-index: 2;
+  bottom: -6%;
+  left: 50%;
+  translate: -50% 0;
+  min-width: calc(var(--s) * 0.34);
+  padding: 0 calc(var(--s) * 0.06);
+  border-radius: 999px;
+  font: 800 max(9px, calc(var(--s) * 0.15)) / 1.35 var(--font-raleway, sans-serif);
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--encre-ruban, #003a5d);
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 58 93 / 0.35);
+}
+
+/* II · Bronze : un anneau de métal chaud. */
+.ecusson-n2 .ecusson-coeur { width: 84%; height: 84%; }
+.ecusson-n2::before {
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, #7a4a22, #d8a06a, #8d5a2b, #e6b27c, #7a4a22);
+  box-shadow: 0 2px 6px rgb(0 58 93 / 0.3), inset 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+.ecusson-n2 .ecusson-ruban { background: linear-gradient(#e6b27c, #a8693a); --encre-ruban: #3b2210; }
+
+/* III · Argent : double anneau, une gorge sombre entre les deux. */
+.ecusson-n3 .ecusson-coeur {
+  width: 78%;
+  height: 78%;
+  box-shadow: 0 0 0 calc(var(--s) * 0.022) #5b6672, 0 0 0 calc(var(--s) * 0.045) #eef2f6;
+}
+.ecusson-n3::before {
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 160deg, #8e9aa6, #f4f7fa, #a7b2bd, #ffffff, #8e9aa6);
+  box-shadow: 0 2px 8px rgb(0 58 93 / 0.35), inset 0 0 0 1px rgb(0 0 0 / 0.18);
+}
+.ecusson-n3 .ecusson-ruban { background: linear-gradient(#ffffff, #b6c0ca); }
+
+/* IV · Or : un sceau dentelé. */
+.ecusson-n4 .ecusson-coeur,
+.ecusson-n5 .ecusson-coeur {
+  width: 74%;
+  height: 74%;
+  box-shadow: 0 0 0 calc(var(--s) * 0.022) #8a6208, 0 0 0 calc(var(--s) * 0.042) #fff1b8;
+}
+.ecusson-n4::before,
+.ecusson-n5::before {
+  inset: 0;
+  clip-path: polygon(50.00% 0.00%, 57.12% 5.06%, 65.45% 2.45%, 70.66% 9.46%, 79.39% 9.55%, 82.17% 17.83%, 90.45% 20.61%, 90.54% 29.34%, 97.55% 34.55%, 94.94% 42.88%, 100.00% 50.00%, 94.94% 57.12%, 97.55% 65.45%, 90.54% 70.66%, 90.45% 79.39%, 82.17% 82.17%, 79.39% 90.45%, 70.66% 90.54%, 65.45% 97.55%, 57.12% 94.94%, 50.00% 100.00%, 42.88% 94.94%, 34.55% 97.55%, 29.34% 90.54%, 20.61% 90.45%, 17.83% 82.17%, 9.55% 79.39%, 9.46% 70.66%, 2.45% 65.45%, 5.06% 57.12%, 0.00% 50.00%, 5.06% 42.88%, 2.45% 34.55%, 9.46% 29.34%, 9.55% 20.61%, 17.83% 17.83%, 20.61% 9.55%, 29.34% 9.46%, 34.55% 2.45%, 42.88% 5.06%);
+  background: conic-gradient(from 0deg, #9c6f06, #ffe27a, #c48d0b, #fff3b0, #a97a07, #ffd34d, #9c6f06);
+  filter: drop-shadow(0 2px 4px rgb(0 58 93 / 0.35));
+}
+.ecusson-n4 .ecusson-ruban,
+.ecusson-n5 .ecusson-ruban { background: linear-gradient(#fff1b0, #d9a514); --encre-ruban: #4a3300; }
+
+/* V · Légendaire : le sceau d'or, un halo aux couleurs de la charte qui tourne,
+   et un reflet qui passe. */
+.ecusson-n5::after {
+  inset: -16%;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(#d03f15, #ff8300, #ffd34d, #65bc99, #007254, #6e74aa, #003a5d, #d03f15);
+  filter: blur(calc(var(--s) * 0.08));
+  opacity: 0.75;
+  animation: ecusson-halo 6s linear infinite;
+}
+.ecusson-n5 .ecusson-coeur::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(115deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: ecusson-reflet 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.ecusson-n5 .ecusson-ruban {
+  background: linear-gradient(90deg, #d03f15, #ff8300, #ffd34d);
+  --encre-ruban: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+}
+@keyframes ecusson-halo {
+  to { rotate: 1turn; }
+}
+@keyframes ecusson-reflet {
+  0%, 30% { background-position: 120% 0; }
+  70%, 100% { background-position: -20% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ecusson-n5::after,
+  .ecusson-n5 .ecusson-coeur::before { animation: none; }
+}
+
+/* Pictogramme du catalogue, servi en masque : il prend la couleur du texte. */
+.picto-masque {
+  display: inline-block;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask: var(--picto) center / contain no-repeat;
+  -webkit-mask: var(--picto) center / contain no-repeat;
+}

@@ -71,7 +71,7 @@ export async function refreshBadges(db: Db, userId: string, projectId: string): 
     }
     await notify(db, userId, {
       type: 'BADGE',
-      message: `Badge débloqué : ${badge.name} ${badge.icon}`,
+      message: `Badge débloqué : ${badge.name}`,
       link: '/profil',
     })
   }

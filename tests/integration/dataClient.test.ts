@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { FileBackend } from '@/lib/data/backend'
 import { createDb } from '@/lib/data/client'
 import { createTestDb, type TestDb } from '../helpers/db'
@@ -133,6 +134,25 @@ describe('magasin fichier', () => {
       const lucie = await second.user.findUnique({ where: { username: 'lucie' } })
       expect(lucie?.createdAt).toBeInstanceOf(Date)
       await expect(second.user.create({ data: jeune('lucie') })).rejects.toMatchObject({ code: 'P2002' })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('donne leur valeur par défaut aux champs ajoutés après coup', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'cap-file-'))
+    try {
+      const file = join(dir, 'cap.json')
+      const db = createDb(new FileBackend(file))
+      await db.badge.create({ data: { code: 'vieux', name: 'Vieux', description: '', icon: '', ruleType: 'TACHES_VALIDEES' } })
+      // Simule un enregistrement écrit avant l'ajout des champs level et color.
+      const raw = JSON.parse(readFileSync(file, 'utf8'))
+      delete raw.Badge[0].d.level
+      delete raw.Badge[0].d.color
+      writeFileSync(file, JSON.stringify(raw))
+
+      const badge = await createDb(new FileBackend(file)).badge.findUnique({ where: { code: 'vieux' } })
+      expect(badge).toMatchObject({ level: 1, color: null, threshold: 1 })
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

@@ -9,6 +9,7 @@ import { PHASES, type Phase } from '@/lib/domain/types'
 import { NotFoundError } from '@/lib/services/errors'
 import { totalForProject } from '@/lib/services/extraJobService'
 import { getVisibleProject } from '@/lib/services/projectService'
+import { couvertureUrl } from '@/lib/ui/apparenceBadge'
 import { PHASE_STYLES } from '@/lib/ui/phases'
 
 /**
@@ -43,9 +44,17 @@ export default async function CapLayout({
   const phase = project.currentPhase as Phase
   const style = PHASE_STYLES[phase]
   const etape = PHASES.indexOf(phase) + 1
+  const couverture = couvertureUrl(project)
 
   return (
     <div className="flex flex-col gap-3">
+      {couverture ? (
+        // La couverture, en bandeau pleine largeur tout en haut du CAP.
+        <div className="-mx-4 -mt-5 aspect-[16/7] overflow-hidden bg-surface-haute sm:rounded-b-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element -- image privée servie par l'API, après session */}
+          <img src={couverture} alt="" className="size-full object-cover" />
+        </div>
+      ) : null}
       {/* En-tête volontairement léger : le titre, et une ligne d'état en texte simple. */}
       <PageHeader
         titre={project.title}

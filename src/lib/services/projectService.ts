@@ -1,3 +1,4 @@
+import type { PrismaClient } from '@prisma/client'
 import type { Db } from '@/lib/db'
 import type { Actor, Phase } from '@/lib/domain/types'
 import { isChef } from '@/lib/domain/types'
@@ -7,6 +8,8 @@ import { notifyMany } from './notificationService'
 export interface CreateProjectInput {
   title: string
   description?: string
+  /** Image de couverture déjà enregistrée. */
+  coverName?: string | null
 }
 
 /**
@@ -23,6 +26,7 @@ export async function createProject(db: Db, actor: Actor, input: CreateProjectIn
       title: input.title.trim(),
       description: input.description?.trim() ?? '',
       status: 'BROUILLON',
+      coverName: input.coverName ?? null,
     },
   })
 }
@@ -85,5 +89,45 @@ export async function archiveProject(db: Db, actor: Actor, projectId: string) {
   return db.project.update({
     where: { id: projectId },
     data: { status: 'ARCHIVE', archivedAt: new Date() },
+  })
+}
+
+/** Change (ou retire, avec null) la couverture. Rend l'ancienne, à effacer du stockage. */
+export async function setProjectCover(db: Db, actor: Actor, projectId: string, coverName: string | null) {
+  if (!isChef(actor)) throw new ForbiddenError()
+  const project = await db.project.findUnique({ where: { id: projectId } })
+  if (!project) throw new NotFoundError('CAP')
+  await db.project.update({ where: { id: projectId }, data: { coverName } })
+  return project.coverName && project.coverName !== coverName ? project.coverName : null
+}
+
+/** Ce qu'une suppression emporterait : affiché avant de confirmer. */
+export async function deletionImpact(db: Db, projectId: string) {
+  const [taches, points, roles, billets] = await Promise.all([
+    db.task.count({ where: { projectId } }),
+    db.pointsEntry.count({ where: { projectId } }),
+    db.projectRole.count({ where: { projectId } }),
+    db.note.count({ where: { projectId } }),
+  ])
+  return { taches, points, roles, billets }
+}
+
+/**
+ * Supprime un CAP pour de bon : tâches, rendus, rôles, billets et points
+ * gagnés dedans. Les écussons restent (ils ne pointent plus vers ce CAP).
+ * Rend les noms des images à effacer du stockage : couverture et photos des
+ * travaux rendus.
+ */
+export async function deleteProject(db: PrismaClient, actor: Actor, projectId: string): Promise<string[]> {
+  if (!isChef(actor)) throw new ForbiddenError()
+  return db.$transaction(async (tx) => {
+    const project = await tx.project.findUnique({ where: { id: projectId } })
+    if (!project) throw new NotFoundError('CAP')
+    const photos = await tx.attachment.findMany({
+      where: { submission: { task: { projectId } } },
+      select: { storedName: true },
+    })
+    await tx.project.delete({ where: { id: projectId } })
+    return [...(project.coverName ? [project.coverName] : []), ...photos.map((p) => p.storedName)]
   })
 }

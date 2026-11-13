@@ -6,6 +6,19 @@
 import { db as prisma } from '../src/lib/db'
 import { hashPassword } from '../src/lib/auth/password'
 
+const APPARENCES: Record<string, { pictoKey: string; color: string; level: number }> = {
+  premier_pas: { pictoKey: 'graine', color: '#007254', level: 1 },
+  bosseur_1: { pictoKey: 'flamme', color: '#ff8300', level: 1 },
+  bosseur_2: { pictoKey: 'trek', color: '#d03f15', level: 2 },
+  bosseur_3: { pictoKey: 'coupe', color: '#003a5d', level: 4 },
+  costaud: { pictoKey: 'montagne', color: '#6e74aa', level: 2 },
+  equipe: { pictoKey: 'tribu', color: '#007254', level: 2 },
+  debut_fin: { pictoKey: 'boussole', color: '#003a5d', level: 3 },
+  sans_faute: { pictoKey: 'etoile', color: '#d03f15', level: 3 },
+  responsable: { pictoKey: 'promesse', color: '#6e74aa', level: 3 },
+  photographe: { pictoKey: 'appareil_photo', color: '#ff8300', level: 1 },
+}
+
 const BADGES = [
   { code: 'premier_pas', name: 'Premier pas', description: 'Ta toute première tâche validée.', icon: '🌱', ruleType: 'TACHES_VALIDEES', threshold: 1, points: 5, sortOrder: 1 },
   { code: 'bosseur_1', name: 'Bosseur I', description: '5 tâches validées.', icon: '🔥', ruleType: 'TACHES_VALIDEES', threshold: 5, points: 10, sortOrder: 2 },
@@ -49,6 +62,15 @@ async function main() {
     // update vide : un seuil ou des points ajustés par le super admin ne doivent
     // pas être réécrits au prochain démarrage du conteneur.
     await prisma.badge.upsert({ where: { code: badge.code }, update: {}, create: badge })
+  }
+
+  // Apparence des badges d'origine (picto, couleur, niveau), posée une seule
+  // fois : un badge déjà personnalisé par l'admin n'est pas touché.
+  for (const [code, look] of Object.entries(APPARENCES)) {
+    const badge = await prisma.badge.findUnique({ where: { code } })
+    if (badge && !badge.pictoKey && !badge.imageName && !badge.color) {
+      await prisma.badge.update({ where: { code }, data: look })
+    }
   }
 
   if ((await prisma.taskTemplate.count({ where: { isBuiltin: true } })) === 0) {

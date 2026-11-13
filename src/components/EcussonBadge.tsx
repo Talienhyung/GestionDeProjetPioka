@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import { BadgePicto } from '@/components/sgdf/BadgePicto'
+import { type ApparenceBadge, Ecusson } from '@/components/Ecusson'
+import { NOMS_NIVEAUX, niveauRomain } from '@/lib/domain/badgeLook'
 
 interface Props {
-  code: string
-  icon: string
+  apparence: ApparenceBadge
   name: string
   description: string
   /** Pourquoi le jeune l'a gagné, en clair. */
@@ -13,7 +13,6 @@ interface Props {
   earnedAt: Date
   projectTitle: string | null
   points: number
-  teinte: string
   inclinaison: string
 }
 
@@ -37,11 +36,11 @@ export function EcussonBadge(props: Props) {
         aria-haspopup="dialog"
       >
         <span
-          className={`grid size-20 place-items-center rounded-full border-4 border-dashed border-carte/60 shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-0 group-focus-visible:scale-110 ${props.teinte} ${props.inclinaison}`}
+          className={`grid transition-transform duration-300 group-hover:scale-110 group-hover:rotate-0 group-focus-visible:scale-110 ${props.inclinaison}`}
         >
-          <BadgePicto code={props.code} icon={props.icon} taille={40} />
+          <Ecusson {...props.apparence} taille={80} />
         </span>
-        <span className="panneau mt-2 text-[11px] leading-tight">{props.name}</span>
+        <span className="panneau mt-3 text-[11px] leading-tight">{props.name}</span>
       </button>
 
       <dialog
@@ -53,13 +52,12 @@ export function EcussonBadge(props: Props) {
         className="ecusson-fiche m-auto w-[min(22rem,calc(100vw-2rem))] rounded-2xl bg-carte p-0 text-encre shadow-2xl backdrop:bg-institution/50 backdrop:backdrop-blur-sm"
       >
         <div className="flex flex-col items-center gap-3 px-6 pt-8 pb-6 text-center">
-          <span
-            className={`grid size-28 place-items-center rounded-full border-[5px] border-dashed border-carte/60 shadow-lg ${props.teinte}`}
-          >
-            <BadgePicto code={props.code} icon={props.icon} taille={58} />
-          </span>
+          <Ecusson {...props.apparence} taille={120} />
 
-          <div>
+          <div className="mt-2">
+            <p className="panneau text-[10px] text-encre-douce">
+              Niveau {niveauRomain(props.apparence.level)} · {NOMS_NIVEAUX[props.apparence.level] ?? ''}
+            </p>
             <h2 className="brush text-4xl leading-none text-accent">{props.name}</h2>
             <p className="mt-1 text-sm text-encre-douce">{props.description}</p>
           </div>

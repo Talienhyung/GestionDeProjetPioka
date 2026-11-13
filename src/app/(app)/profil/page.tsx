@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { EcussonBadge } from '@/components/EcussonBadge'
-import { teinteBadge } from '@/components/sgdf/BadgePicto'
 import { Picto } from '@/components/sgdf/Picto'
 import { requireUser } from '@/lib/auth/guard'
 import { badgeReason } from '@/lib/domain/badgeReasons'
 import { isChef } from '@/lib/domain/types'
 import { db } from '@/lib/db'
 import { getLedger, getScore } from '@/lib/services/pointsService'
+import { apparenceBadge } from '@/lib/ui/apparenceBadge'
 import { salutation } from '@/lib/ui/salutation'
 
 const MOTIFS: Record<string, string> = {
@@ -43,6 +43,7 @@ export default async function ProfilPage() {
     ...(user.role === 'SUPER_ADMIN'
       ? [
           { href: '/comptes', label: 'Comptes' },
+          { href: '/badges', label: 'Badges' },
           { href: '/parametres', label: 'Paramètres' },
         ]
       : []),
@@ -83,19 +84,17 @@ export default async function ProfilPage() {
             </p>
           </div>
         ) : (
-          <ul className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4">
+          <ul className="grid grid-cols-3 gap-x-3 gap-y-6 pt-2 sm:grid-cols-4">
             {earned.map(({ id, badge, earnedAt, project }, i) => (
               <li key={id} className="flex justify-center">
                 <EcussonBadge
-                  code={badge.code}
-                  icon={badge.icon}
+                  apparence={apparenceBadge(badge)}
                   name={badge.name}
                   description={badge.description}
                   reason={badgeReason(badge.ruleType, badge.threshold)}
                   earnedAt={earnedAt}
                   projectTitle={project?.title ?? null}
                   points={badge.points}
-                  teinte={teinteBadge(badge.sortOrder)}
                   inclinaison={INCLINAISONS[i % INCLINAISONS.length]}
                 />
               </li>
