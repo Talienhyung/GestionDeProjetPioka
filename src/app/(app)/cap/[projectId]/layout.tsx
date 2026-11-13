@@ -48,13 +48,6 @@ export default async function CapLayout({
 
   return (
     <div className="flex flex-col gap-3">
-      {couverture ? (
-        // La couverture, en bandeau pleine largeur tout en haut du CAP.
-        <div className="-mx-4 -mt-5 aspect-[16/7] overflow-hidden bg-surface-haute sm:rounded-b-2xl">
-          {/* eslint-disable-next-line @next/next/no-img-element -- image privée servie par l'API, après session */}
-          <img src={couverture} alt="" className="size-full object-cover" />
-        </div>
-      ) : null}
       {/* En-tête volontairement léger : le titre, et une ligne d'état en texte simple. */}
       <PageHeader
         titre={project.title}
@@ -69,7 +62,15 @@ export default async function CapLayout({
         ]
           .filter(Boolean)
           .join(' · ')}
-      />
+      >
+        {couverture ? (
+          // La couverture en bandeau, sous le titre : présente sans prendre la page.
+          <div className="mt-1 h-20 overflow-hidden rounded-xl bg-surface-haute sm:h-28">
+            {/* eslint-disable-next-line @next/next/no-img-element -- image privée servie par l'API, après session */}
+            <img src={couverture} alt="" className="size-full object-cover" />
+          </div>
+        ) : null}
+      </PageHeader>
 
       <OngletsProjet projectId={project.id} />
 

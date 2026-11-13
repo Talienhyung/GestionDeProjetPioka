@@ -10,9 +10,9 @@ import { reduireChampPhotos } from '@/lib/ui/reduirePhoto'
 type Genre = 'billet' | 'photo'
 
 /**
- * Le bouton « + » du tableau, en bas à droite, au-dessus de la barre de
- * navigation : un disque orange dont la croix est découpée. Il ouvre la
- * fenêtre d'écriture, billet ou photo polaroid.
+ * Le bouton « + » du tableau : un disque orange, croix blanche, rangé dans le
+ * coin bas droit du tableau. Il ouvre la fenêtre d'écriture, billet ou photo
+ * polaroid.
  */
 export function NouveauBillet({ projectId }: { projectId: string | null }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -49,18 +49,10 @@ export function NouveauBillet({ projectId }: { projectId: string | null }) {
         type="button"
         onClick={ouvrir}
         aria-label="Écrire un billet"
-        className="fixed right-4 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 size-16 rounded-full drop-shadow-[0_6px_10px_rgb(0_58_93/0.35)] transition-transform hover:scale-105 active:scale-95"
+        className="pointer-events-auto grid size-14 place-items-center rounded-full bg-choisir text-white shadow-[0_6px_14px_-4px_rgb(0_58_93/0.45)] transition-transform hover:scale-105 active:scale-95"
       >
-        {/* Disque orange, croix évidée : on voit le tableau à travers. */}
-        <svg viewBox="0 0 64 64" className="size-full" aria-hidden>
-          <defs>
-            <mask id="plus-evide">
-              <rect width="64" height="64" fill="#fff" />
-              <rect x="28.5" y="16" width="7" height="32" rx="3.5" fill="#000" />
-              <rect x="16" y="28.5" width="32" height="7" rx="3.5" fill="#000" />
-            </mask>
-          </defs>
-          <circle cx="32" cy="32" r="32" fill="var(--choisir)" mask="url(#plus-evide)" />
+        <svg viewBox="0 0 24 24" className="size-7" aria-hidden>
+          <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
         </svg>
       </button>
 
@@ -69,7 +61,7 @@ export function NouveauBillet({ projectId }: { projectId: string | null }) {
         onClick={(e) => {
           if (e.target === dialog.current && !pending) dialog.current?.close()
         }}
-        className="ecusson-fiche m-auto w-[min(26rem,calc(100vw-1.5rem))] rounded-2xl bg-carte p-0 text-encre shadow-2xl backdrop:bg-institution/50 backdrop:backdrop-blur-sm"
+        className="ecusson-fiche pointer-events-auto m-auto w-[min(26rem,calc(100vw-1.5rem))] rounded-2xl bg-carte p-0 text-encre shadow-2xl backdrop:bg-institution/50 backdrop:backdrop-blur-sm"
       >
         <form key={tour} ref={formulaire} action={action} className="flex flex-col gap-4 p-5">
           <input type="hidden" name="projectId" value={projectId ?? ''} />

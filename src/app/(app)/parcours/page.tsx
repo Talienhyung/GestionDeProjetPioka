@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/PageHeader'
 import { type EtapeVue, RouteParcours } from '@/components/RouteParcours'
 import { PictoMasque } from '@/components/sgdf/PictoMasque'
 import { requireUser } from '@/lib/auth/guard'
@@ -31,14 +32,8 @@ export default async function ParcoursPage() {
   return (
     // Hauteur de l'écran moins la barre du bas : pas de défilement de page,
     // c'est la route qui défile, de côté.
-    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[34rem] flex-col gap-4">
-      <header className="flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <p className="panneau text-[10px] text-encre-douce">Ton parcours</p>
-          <h1 className="brush truncate text-4xl leading-none">La route de {prenom}</h1>
-        </div>
-        <PictoMasque cle="trek" taille={40} className="shrink-0 text-accent" />
-      </header>
+    <div className="flex h-[calc(100dvh-8.5rem)] min-h-[36rem] flex-col gap-3">
+      <PageHeader picto="trek" surtitre="Ton parcours" titre={`La route de ${prenom}`} />
 
       <dl className="grid grid-cols-3 gap-2 text-center">
         {[

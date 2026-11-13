@@ -10,6 +10,8 @@ interface Props {
   className?: string
   /** Question posée avant d'agir, pour les gestes difficiles à défaire. */
   confirm?: string
+  /** Nom du bouton pour les lecteurs d'écran, quand il n'affiche qu'une icône. */
+  label?: string
 }
 
 /**
@@ -17,7 +19,7 @@ interface Props {
  * `<form action={…}>` n'accepte qu'une action rendant void : ce composant
  * est le passage obligé pour les actions qui rendent un FormState.
  */
-export function ActionButton({ action, children, className = '', confirm }: Props) {
+export function ActionButton({ action, children, className = '', confirm, label }: Props) {
   const [pending, startTransition] = useTransition()
   const [state, setState] = useState<FormState>({})
 
@@ -25,6 +27,8 @@ export function ActionButton({ action, children, className = '', confirm }: Prop
     <span className="inline-flex flex-col gap-1">
       <button
         type="button"
+        aria-label={label}
+        title={label}
         disabled={pending}
         className={`${className} disabled:opacity-60`}
         onClick={() => {

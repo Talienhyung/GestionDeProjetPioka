@@ -13,10 +13,7 @@ interface Props {
 export function MurDeBillets({ notes, projectId, currentUserId, isChef, modifiable }: Props) {
   return (
     <div className="flex flex-col gap-4">
-      {modifiable ? <NouveauBillet projectId={projectId} /> : null}
-
-      {/* pb : le bouton + ne cache jamais le dernier billet. */}
-      <div className="tableau-liege rounded-2xl border border-trait px-3 pt-4 pb-20">
+      <div className="tableau-liege rounded-2xl border border-trait px-3 pt-4 pb-3">
         {notes.length === 0 ? (
           <p className="pb-4 text-center text-sm text-encre-douce">
             Le tableau est vide{modifiable ? ' : touche le + pour écrire le premier billet.' : '.'}
@@ -35,6 +32,14 @@ export function MurDeBillets({ notes, projectId, currentUserId, isChef, modifiab
             ))}
           </div>
         )}
+
+        {/* Le + vit dans le coin bas droit du tableau ; sur un long tableau, il
+            reste collé au bas de l'écran, au-dessus de la barre de navigation. */}
+        {modifiable ? (
+          <div className="pointer-events-none sticky bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-10 mt-1 flex justify-end">
+            <NouveauBillet projectId={projectId} />
+          </div>
+        ) : null}
       </div>
     </div>
   )

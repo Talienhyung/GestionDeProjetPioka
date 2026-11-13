@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { type ApparenceBadge, Ecusson } from '@/components/Ecusson'
-import { PictoMasque } from '@/components/sgdf/PictoMasque'
+import { type FormeTampon, Tampon } from '@/components/Tampon'
+import { NOMS_NIVEAUX, niveauRomain } from '@/lib/domain/badgeLook'
 import type { GenreEtape } from '@/lib/domain/parcours'
 
 /** Une étape, sérialisée pour le client (dates en ISO). */
@@ -19,45 +20,119 @@ export interface EtapeVue {
   badge?: ApparenceBadge
 }
 
-const STYLE: Record<GenreEtape, { label: string; picto: string; fond: string; encre: string; doux: string }> = {
-  DEPART: { label: 'Le départ', picto: 'tente', fond: 'var(--institution)', encre: '#fff', doux: 'var(--surface-haute)' },
-  ACTIVITE: { label: 'Activité', picto: 'feu_de_camp', fond: 'var(--institution)', encre: '#fff', doux: 'var(--surface-haute)' },
-  TACHE: { label: 'Tâche validée', picto: 'coche', fond: 'var(--agir)', encre: '#fff', doux: 'var(--agir-doux)' },
-  ROLE: { label: 'Rôle tenu', picto: 'promesse', fond: 'var(--partager)', encre: '#fff', doux: 'var(--partager-doux)' },
-  BADGE: { label: 'Badge gagné', picto: 'coupe', fond: 'var(--accent)', encre: '#fff', doux: 'var(--accent-doux)' },
-  BOULOT: { label: 'Petit boulot', picto: 'euros', fond: 'var(--choisir)', encre: 'var(--encre)', doux: 'var(--choisir-doux)' },
-  BONUS: { label: 'Bonus', picto: 'etincelle', fond: 'var(--choisir)', encre: 'var(--encre)', doux: 'var(--choisir-doux)' },
-  A_VENIR: { label: 'Prochaine étape', picto: 'destination', fond: 'var(--carte)', encre: 'var(--accent)', doux: 'var(--surface)' },
+const TAMPON: Record<Exclude<GenreEtape, 'BADGE'>, { forme: FormeTampon; encre: string; picto: string; haut: string }> = {
+  DEPART: { forme: 'rond', encre: 'var(--institution)', picto: 'tente', haut: 'DÉPART' },
+  ACTIVITE: { forme: 'rond', encre: 'var(--institution)', picto: 'feu_de_camp', haut: 'ACTIVITÉ' },
+  TACHE: { forme: 'rectangle', encre: 'var(--agir)', picto: 'coche', haut: 'VALIDÉ' },
+  ROLE: { forme: 'octogone', encre: 'var(--partager-encre)', picto: 'promesse', haut: 'RÔLE TENU' },
+  BOULOT: { forme: 'ticket', encre: 'var(--choisir-encre)', picto: 'euros', haut: 'PETIT BOULOT' },
+  BONUS: { forme: 'etoile', encre: 'var(--accent)', picto: 'etincelle', haut: 'BONUS' },
+  A_VENIR: { forme: 'rond', encre: 'var(--encre-douce)', picto: 'destination', haut: 'À VENIR' },
+}
+
+const LIBELLE: Record<GenreEtape, string> = {
+  DEPART: 'Le départ',
+  ACTIVITE: 'Activité',
+  TACHE: 'Tâche validée',
+  ROLE: 'Rôle tenu',
+  BADGE: 'Badge gagné',
+  BOULOT: 'Petit boulot',
+  BONUS: 'Bonus',
+  A_VENIR: 'Prochaine étape',
+}
+
+const MOIS = ['JANV', 'FÉVR', 'MARS', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEPT', 'OCT', 'NOV', 'DÉC']
+
+/** « 12 OCT 2026 », à l'heure de Paris : la date frappée dans le tampon. */
+function dateTampon(iso: string): string {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'numeric', year: 'numeric' })
+      .formatToParts(new Date(iso))
+      .map((x) => [x.type, x.value]),
+  )
+  return `${p.day} ${MOIS[Number(p.month) - 1]} ${p.year}`
 }
 
 const dateLongue = (iso: string) =>
   new Date(iso).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Paris' })
-const annee = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { year: 'numeric', timeZone: 'Europe/Paris' })
+
+function empreinte(texte: string): number {
+  let h = 0
+  for (const c of texte) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return h
+}
+
+/** Hauteur de la zone du tampon : le pointillé passe à mi-hauteur. */
+const H_TAMPON = 164
+/** Hauteur approximative d'une étape complète (tampon + texte) : sert à la centrer. */
+const H_CONTENU = 320
+/** Hauteur des ondulations du pointillé. */
+const BOSSE = 22
+/** Demi-largeur visible de chaque genre de tampon : le pointillé s'arrête à son bord. */
+const RAYON: Record<GenreEtape, number> = {
+  DEPART: 76,
+  ACTIVITE: 76,
+  TACHE: 76,
+  ROLE: 72,
+  BOULOT: 76,
+  BONUS: 74,
+  BADGE: 66,
+  A_VENIR: 56,
+}
 
 /**
- * La route du jeune, à parcourir du doigt : une étape au centre, les voisines
- * qui dépassent sur les côtés, reliées par un pointillé orange qui ondule.
- * Le défilement s'arrête à chaque étape (scroll-snap), une à la fois.
+ * La route du jeune, à parcourir du doigt : un coup de tampon par étape, une
+ * étape au centre, les voisines qui dépassent sur les côtés, le tout relié par
+ * un pointillé orange qui ondule. Le défilement s'arrête à chaque étape.
  */
 export function RouteParcours({ etapes, depart }: { etapes: EtapeVue[]; depart: number }) {
   const piste = useRef<HTMLOListElement>(null)
   const [courante, setCourante] = useState(depart)
+  const [route, setRoute] = useState<{ d: string; largeur: number; y: number } | null>(null)
 
-  const cartes = () => Array.from(piste.current?.children ?? []) as HTMLElement[]
+  const stations = (): HTMLElement[] => Array.from(piste.current?.querySelectorAll<HTMLElement>(':scope > .route-etape') ?? [])
 
-  /** Agrandit l'étape du centre, estompe les autres, selon leur distance. */
+  /** Une seule courbe, lisse, qui passe par le centre de chaque station en ondulant. */
+  const tracer = useCallback(() => {
+    const el = piste.current
+    if (!el) return
+    // L'étape se centre (un peu bas) dans la hauteur disponible.
+    // Sur un grand écran, l'étape grandit un peu pour occuper la hauteur.
+    const zoom = Math.min(1.25, Math.max(1, el.clientHeight / 520))
+    el.style.setProperty('--zoom', String(zoom))
+    // Un peu sous le centre : la barre du bas pèse visuellement plus que les pastilles du haut.
+    const haut = Math.max(12, Math.round((el.clientHeight - H_CONTENU * zoom) / 2 + 44))
+    el.style.setProperty('--haut-etape', `${haut}px`)
+    const y = haut + H_TAMPON / 2
+    const pts = stations().map((s) => ({
+      x: s.offsetLeft + s.offsetWidth / 2,
+      r: RAYON[(s.dataset.genre ?? 'ACTIVITE') as GenreEtape] * zoom,
+    }))
+    // Un tronçon entre chaque paire de tampons, du bord de l'un au bord de
+    // l'autre : une vague douce (en haut puis en bas), qui part et arrive à plat.
+    let d = ''
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1].x + pts[i - 1].r + 6
+      const b = pts[i].x - pts[i].r - 6
+      const l = b - a
+      if (l < 24) continue
+      d += ` M ${a} ${y} C ${a + l * 0.3} ${y - BOSSE * 2} ${b - l * 0.3} ${y + BOSSE * 2} ${b} ${y}`
+    }
+    setRoute({ d: d.trim(), largeur: el.scrollWidth, y })
+  }, [])
+
+  /** Met en avant l'étape du centre ; les autres rapetissent et pâlissent. */
   const peindre = useCallback(() => {
     const el = piste.current
     if (!el) return
     const centre = el.scrollLeft + el.clientWidth / 2
     let plusProche = 0
     let meilleure = Infinity
-    cartes().forEach((carte, i) => {
-      const milieu = carte.offsetLeft + carte.offsetWidth / 2
-      const d = (milieu - centre) / carte.offsetWidth
+    stations().forEach((s, i) => {
+      const d = (s.offsetLeft + s.offsetWidth / 2 - centre) / s.offsetWidth
       const a = Math.min(Math.abs(d), 1.2)
-      carte.style.setProperty('--echelle', String(1 - a * 0.1))
-      carte.style.setProperty('--opacite', String(1 - Math.min(a, 1) * 0.5))
+      s.style.setProperty('--echelle', String(1 - a * 0.14))
+      s.style.setProperty('--opacite', String(1 - Math.min(a, 1) * 0.55))
       if (Math.abs(d) < meilleure) {
         meilleure = Math.abs(d)
         plusProche = i
@@ -68,19 +143,20 @@ export function RouteParcours({ etapes, depart }: { etapes: EtapeVue[]; depart: 
 
   const aller = useCallback((i: number, doux = true) => {
     const el = piste.current
-    const carte = cartes()[i]
-    if (!el || !carte) return
+    const s = stations()[i]
+    if (!el || !s) return
     el.scrollTo({
-      left: carte.offsetLeft + carte.offsetWidth / 2 - el.clientWidth / 2,
+      left: s.offsetLeft + s.offsetWidth / 2 - el.clientWidth / 2,
       behavior: doux && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'instant',
     })
   }, [])
 
   // Ouvre directement sur la dernière étape vécue, sans animation.
   useLayoutEffect(() => {
+    tracer()
     aller(depart, false)
     peindre()
-  }, [aller, depart, peindre])
+  }, [aller, depart, peindre, tracer])
 
   useEffect(() => {
     const el = piste.current
@@ -90,207 +166,153 @@ export function RouteParcours({ etapes, depart }: { etapes: EtapeVue[]; depart: 
       cancelAnimationFrame(image)
       image = requestAnimationFrame(peindre)
     }
+    const surTaille = () => {
+      tracer()
+      surDefilement()
+    }
     el.addEventListener('scroll', surDefilement, { passive: true })
-    window.addEventListener('resize', surDefilement)
+    window.addEventListener('resize', surTaille)
+    // Les polices arrivent après le premier rendu et changent les largeurs.
+    document.fonts?.ready.then(surTaille)
     return () => {
       el.removeEventListener('scroll', surDefilement)
-      window.removeEventListener('resize', surDefilement)
+      window.removeEventListener('resize', surTaille)
       cancelAnimationFrame(image)
     }
-  }, [peindre])
-
-  const derniere = etapes.length - 1
+  }, [peindre, tracer])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ol
-        ref={piste}
-        tabIndex={0}
-        aria-label="Ton parcours, étape par étape"
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowRight') {
-            e.preventDefault()
-            aller(Math.min(derniere, courante + 1))
-          } else if (e.key === 'ArrowLeft') {
-            e.preventDefault()
-            aller(Math.max(0, courante - 1))
-          }
-        }}
-        className="route-piste -mx-4 flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain outline-none"
-      >
-        {etapes.map((etape, i) => (
-          <Etape key={etape.cle} etape={etape} premiere={i === 0} derniere={i === derniere} active={i === courante} />
-        ))}
-      </ol>
-
-      <div className="flex items-center gap-3 pt-3">
-        <button
-          type="button"
-          onClick={() => aller(Math.max(0, courante - 1))}
-          disabled={courante === 0}
-          aria-label="Étape précédente"
-          className="grid size-10 shrink-0 place-items-center rounded-full border border-trait bg-carte text-lg disabled:opacity-30"
-        >
-          ‹
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="h-1.5 overflow-hidden rounded-full bg-surface-haute">
-            <div
-              className="h-full rounded-full bg-choisir transition-[width] duration-300"
-              style={{ width: `${etapes.length > 1 ? (courante / derniere) * 100 : 100}%` }}
+    <ol
+      ref={piste}
+      tabIndex={0}
+      aria-label="Ton parcours, étape par étape"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault()
+          aller(Math.max(0, Math.min(etapes.length - 1, courante + (e.key === 'ArrowRight' ? 1 : -1))))
+        }
+      }}
+      className="route-piste relative -mx-4 flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain outline-none"
+    >
+      {route ? (
+        <li aria-hidden className="pointer-events-none absolute top-0 left-0" style={{ width: route.largeur }}>
+          <svg width={route.largeur} height={route.y + BOSSE * 3} className="block overflow-visible">
+            <path
+              d={route.d}
+              fill="none"
+              stroke="var(--choisir)"
+              strokeWidth={4}
+              strokeLinecap="round"
+              strokeDasharray="0 9"
             />
-          </div>
-          <p className="mt-1 flex justify-between text-[11px] text-encre-douce">
-            <span className="tabular-nums">
-              Étape {courante + 1} / {etapes.length}
-            </span>
-            {courante !== depart ? (
-              <button type="button" onClick={() => aller(depart)} className="panneau text-accent">
-                Revenir à aujourd’hui
-              </button>
-            ) : null}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => aller(Math.min(derniere, courante + 1))}
-          disabled={courante === derniere}
-          aria-label="Étape suivante"
-          className="grid size-10 shrink-0 place-items-center rounded-full border border-trait bg-carte text-lg disabled:opacity-30"
-        >
-          ›
-        </button>
-      </div>
-    </div>
+          </svg>
+        </li>
+      ) : null}
+
+      {etapes.map((etape, i) => (
+        <Etape key={etape.cle} etape={etape} active={i === courante} />
+      ))}
+    </ol>
   )
 }
 
-function Etape({
-  etape,
-  premiere,
-  derniere,
-  active,
-}: {
-  etape: EtapeVue
-  premiere: boolean
-  derniere: boolean
-  active: boolean
-}) {
-  const s = STYLE[etape.genre]
+function Etape({ etape, active }: { etape: EtapeVue; active: boolean }) {
   const avenir = etape.genre === 'A_VENIR'
+  const h = empreinte(etape.cle)
+  // Toujours un peu de travers, jamais tout droit : entre 2 et 8 degrés, d'un côté ou de l'autre.
+  const angle = (h % 2 ? 1 : -1) * (2 + (h % 7)) * (avenir ? 0.5 : 1)
 
-  const contenu = (
-    <article
-      className={`relative flex h-full flex-col overflow-hidden rounded-2xl border bg-carte shadow-[0_10px_24px_-14px_rgb(0_58_93/0.45)] ${
-        avenir ? 'border-2 border-dashed border-accent/50' : 'border-trait'
-      }`}
+  return (
+    <li
+      className={`route-etape relative flex shrink-0 snap-center snap-always flex-col items-center ${avenir ? 'route-avenir' : ''}`}
+      aria-current={active ? 'step' : undefined}
+      data-genre={etape.genre}
     >
-      <div className="h-1.5 shrink-0" style={{ background: avenir ? 'transparent' : s.fond }} />
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
-        <p className="panneau text-[10px]" style={{ color: avenir ? 'var(--accent)' : 'var(--encre-douce)' }}>
-          {s.label}
-        </p>
-
-        <h2 className="brush text-[2rem] leading-[1.05] break-words">{etape.titre}</h2>
-        {etape.detail ? (
-          <p className="line-clamp-4 text-sm whitespace-pre-line text-encre-douce">{etape.detail}</p>
-        ) : null}
-
-        {/* Le cœur de la carte : l'écusson gagné, ou un tampon comme sur un carnet de route. */}
-        <div className="grid min-h-0 flex-1 place-items-center py-2">
-          {etape.badge ? (
-            <Ecusson {...etape.badge} taille={104} />
+      <Link
+        href={etape.lien ?? '#'}
+        aria-disabled={!etape.lien}
+        tabIndex={etape.lien && active ? undefined : -1}
+        onClick={(e) => {
+          if (!etape.lien || !active) e.preventDefault()
+        }}
+        className="route-carte flex min-h-0 w-full flex-1 flex-col items-center text-center"
+        style={{ paddingTop: 'var(--haut-etape, 24px)' }}
+      >
+        {/* Le tampon, dans une zone de hauteur fixe : le pointillé passe à mi-hauteur. */}
+        <div className="grid shrink-0 place-items-center" style={{ height: H_TAMPON }}>
+          {etape.genre === 'BADGE' && etape.badge ? (
+            <BadgeGagne badge={etape.badge} angle={angle} />
           ) : (
-            <span
-              aria-hidden
-              className="grid aspect-square h-full max-h-32 min-h-16 -rotate-12 place-items-center rounded-full border-[3px] border-dashed opacity-25"
-              style={{ borderColor: avenir ? 'var(--accent)' : s.fond, color: avenir ? 'var(--accent)' : s.fond }}
-            >
-              <PictoMasque cle={s.picto} taille={56} />
-            </span>
+            <Tampon
+              {...TAMPON[etape.genre as Exclude<GenreEtape, 'BADGE'>]}
+              bas={dateTampon(etape.date)}
+              taille={avenir ? 112 : 152}
+              angle={angle}
+              graine={h % 97}
+              pointille={avenir}
+            />
           )}
         </div>
 
-        <div className="flex items-end justify-between gap-2">
-          <p className="text-xs leading-tight text-encre-douce first-letter:uppercase">
-            {dateLongue(etape.date)}
-            <span className="block">{annee(etape.date)}</span>
-          </p>
-          {etape.points !== 0 ? (
+        <p className="panneau mt-3 text-[10px] text-encre-douce">{LIBELLE[etape.genre]}</p>
+        <h2 className={`brush mt-0.5 leading-[1.05] break-words ${avenir ? 'text-2xl text-encre-douce' : 'text-[2rem]'}`}>
+          {etape.titre}
+        </h2>
+        {etape.detail ? (
+          <p className="mt-1 line-clamp-2 max-w-[18rem] text-sm whitespace-pre-line text-encre-douce">{etape.detail}</p>
+        ) : null}
+        <p className="mt-1 text-xs text-encre-douce first-letter:uppercase">{dateLongue(etape.date)}</p>
+
+        {etape.points !== 0 ? (
+          <p className="mt-2 flex items-baseline gap-2">
             <span
-              className={`brush shrink-0 rounded-full px-3 py-0.5 text-2xl leading-tight tabular-nums ${
-                etape.points > 0 ? 'bg-choisir text-encre' : 'bg-erreur-doux text-erreur'
+              className={`brush inline-block -rotate-3 text-3xl leading-none tabular-nums ${
+                etape.points > 0 ? 'text-choisir-encre' : 'text-erreur'
               }`}
             >
               {etape.points > 0 ? '+' : ''}
               {etape.points} pts
             </span>
-          ) : avenir ? (
-            <span className="panneau text-[10px] text-accent">À venir</span>
-          ) : null}
-        </div>
-        <p className="flex justify-between border-t border-dashed border-trait pt-2 text-[11px] text-encre-douce">
-          <span>{avenir ? 'Tu en es à' : 'Total sur ta route'}</span>
-          <strong className="text-encre tabular-nums">{etape.cumul} pts</strong>
-        </p>
-      </div>
-    </article>
-  )
-
-  return (
-    <li
-      className="route-etape relative flex shrink-0 snap-center snap-always flex-col"
-      style={{ '--echelle': 1, '--opacite': 1 } as CSSProperties}
-      aria-current={active ? 'step' : undefined}
-    >
-      {/* La station sur la route, et le pointillé qui part vers l'étape suivante. */}
-      <div className="relative mb-3 flex h-14 shrink-0 items-center justify-center">
-        {!derniere ? <Vague /> : null}
-        {premiere ? null : <Vague gauche />}
-        <span
-          className={`relative z-10 grid size-14 place-items-center rounded-full border-4 border-surface shadow-md transition-transform duration-300 ${
-            active ? 'scale-110' : ''
-          } ${avenir ? 'border-dashed !border-accent' : ''}`}
-          style={{ background: s.fond, color: s.encre }}
-        >
-          <PictoMasque cle={s.picto} taille={26} />
-        </span>
-      </div>
-      <Link
-        href={etape.lien ?? '#'}
-        aria-disabled={!etape.lien}
-        tabIndex={etape.lien ? undefined : -1}
-        onClick={(e) => {
-          if (!etape.lien || !active) e.preventDefault()
-        }}
-        className={`route-carte min-h-0 flex-1 ${etape.lien && active ? '' : 'cursor-default'}`}
-      >
-        {contenu}
+            <span className="text-[11px] text-encre-douce tabular-nums">→ {etape.cumul} au total</span>
+          </p>
+        ) : null}
       </Link>
     </li>
   )
 }
 
-/** Un demi-tronçon de route : pointillé orange ondulé, du centre de la station vers le bord. */
-function Vague({ gauche = false }: { gauche?: boolean }) {
+/** Un badge gagné : l'écusson posé sur un éclat de lumière, avec son ruban de niveau. */
+function BadgeGagne({ badge, angle }: { badge: ApparenceBadge; angle: number }) {
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 100 32"
-      preserveAspectRatio="none"
-      className={`absolute top-1/2 h-8 -translate-y-1/2 ${gauche ? 'right-1/2' : 'left-1/2'}`}
-      style={{ width: 'calc(50% + var(--route-ecart) / 2 + 1px)' }}
-    >
-      <path
-        // Une ondulation par demi-tronçon : la bosse de gauche répond au creux de droite.
-        d={gauche ? 'M0 16 C20 32 30 32 50 16 S80 0 100 16' : 'M0 16 C20 0 30 0 50 16 S80 32 100 16'}
-        fill="none"
-        stroke="var(--choisir)"
-        strokeWidth={4}
-        strokeLinecap="round"
-        strokeDasharray="0 10"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+    <div className="relative grid size-40 shrink-0 place-items-center">
+      {/* Éclat : des rayons à la couleur du badge, qui tournent doucement. */}
+      <span aria-hidden className="badge-eclat absolute inset-0" style={{ '--fond': badge.color } as CSSProperties} />
+      {/* Confettis aux couleurs de la charte. */}
+      {[
+        ['6%', '16%', 'var(--choisir)', '20deg'],
+        ['86%', '10%', 'var(--agir)', '-25deg'],
+        ['94%', '50%', 'var(--partager)', '70deg'],
+        ['90%', '78%', 'var(--accent)', '45deg'],
+        ['0%', '48%', 'var(--agir)', '-60deg'],
+        ['4%', '80%', 'var(--partager)', '-10deg'],
+        ['46%', '-4%', 'var(--accent)', '8deg'],
+        ['24%', '2%', 'var(--partager)', '-30deg'],
+        ['72%', '0%', 'var(--choisir)', '35deg'],
+        ['18%', '96%', 'var(--choisir)', '15deg'],
+      ].map(([x, y, c, r]) => (
+        <span
+          key={x + y}
+          aria-hidden
+          className="absolute h-3 w-1.5 rounded-full"
+          style={{ left: x, top: y, background: c, rotate: r }}
+        />
+      ))}
+      <span className="relative" style={{ rotate: `${angle * 0.6}deg` }}>
+        <Ecusson {...badge} taille={104} ruban={false} />
+      </span>
+      <span className="panneau absolute bottom-3 bg-accent px-4 py-1 text-[10px] whitespace-nowrap text-sur-accent shadow-md [clip-path:polygon(0_0,100%_0,93%_50%,100%_100%,0_100%,7%_50%)]">
+        Niveau {niveauRomain(badge.level)} · {NOMS_NIVEAUX[badge.level]}
+      </span>
+    </div>
   )
 }

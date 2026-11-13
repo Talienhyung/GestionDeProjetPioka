@@ -389,23 +389,53 @@ select {
 
 /* ── Parcours : la route du jeune, une étape au centre ──────────────────── */
 .route-piste {
-  --route-carte: min(76vw, 21rem);
-  --route-ecart: 1.25rem;
+  --route-carte: min(60vw, 16rem);
+  --route-ecart: 0px;
   gap: var(--route-ecart);
   /* Assez de marge pour que la première et la dernière étape se centrent. */
   padding-inline: calc(50% - var(--route-carte) / 2);
-  padding-block: 0.25rem 0.75rem;
+  padding-block: 0 0.5rem;
   scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  /* Les voisines s'effacent en douceur vers les bords. */
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+}
+.route-piste::-webkit-scrollbar {
+  display: none;
 }
 .route-etape {
   width: var(--route-carte);
 }
 .route-carte {
-  display: block;
-  transform: scale(var(--echelle, 1));
-  transform-origin: 50% 0;
+  transform: scale(calc(var(--echelle, 1) * var(--zoom, 1)));
+  /* Origine au centre du tampon : en rapetissant, il reste sur le pointillé. */
+  transform-origin: 50% calc(var(--haut-etape, 24px) + 82px);
   opacity: var(--opacite, 1);
   will-change: transform, opacity;
 }
+/* Ce qui vient n'est pas encore vécu : plus petit, en gris. */
+.route-avenir .route-carte {
+  opacity: calc(var(--opacite, 1) * 0.55);
+  filter: grayscale(1);
+  transform: scale(calc(var(--echelle, 1) * var(--zoom, 1) * 0.86));
+}
 
+/* Éclat derrière un badge gagné : des rayons de sa couleur, qui tournent. */
+.badge-eclat {
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in oklab, var(--fond) 60%, transparent) 0deg 9deg,
+    transparent 9deg 22.5deg
+  );
+  mask: radial-gradient(circle, #000 35%, transparent 71%);
+  animation: eclat-tourne 24s linear infinite;
+}
+@keyframes eclat-tourne {
+  to {
+    rotate: 1turn;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge-eclat {
+    animation: none;
+  }
+}
