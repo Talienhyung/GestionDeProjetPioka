@@ -16,7 +16,7 @@ export function MurDeBillets({ notes, projectId, currentUserId, isChef, modifiab
       {modifiable ? <NouveauBillet projectId={projectId} /> : null}
 
       {/* pb : le bouton + ne cache jamais le dernier billet. */}
-      <div className="tableau-liege rounded-2xl border border-trait px-3 pt-4 pb-20">
+      <div className="tableau-liege rounded-2xl border border-trait px-3 pt-4 pb-16">
         {notes.length === 0 ? (
           <p className="pb-4 text-center text-sm text-encre-douce">
             Le tableau est vide{modifiable ? ' : touche le + pour écrire le premier billet.' : '.'}

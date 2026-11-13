@@ -49,6 +49,24 @@ export function writeConflict(): Error {
   )
 }
 
+/**
+ * Remplace `cible` par `source` d'un bloc. Sous Windows, le renommage échoue
+ * (EPERM, EBUSY) tant qu'un autre processus lit le fichier, le serveur de dev
+ * pendant un amorçage par exemple : on réessaie quelques instants.
+ */
+function remplacer(source: string, cible: string): void {
+  for (let essai = 0; ; essai++) {
+    try {
+      renameSync(source, cible)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code
+      if (essai >= 40 || (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES')) throw error
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25)
+    }
+  }
+}
+
 /** Tout en mémoire : les tests, et la base du magasin fichier. */
 export class MemoryBackend implements Backend {
   protected tables = new Map<string, Map<string, Stored>>()
@@ -145,9 +163,9 @@ export class FileBackend extends MemoryBackend {
     }
     mkdirSync(dirname(this.file), { recursive: true })
     // Écriture puis renommage : un arrêt brutal ne laisse jamais un fichier à moitié écrit.
-    const tmp = `${this.file}.tmp`
+    const tmp = `${this.file}.${process.pid}.tmp`
     writeFileSync(tmp, JSON.stringify(out))
-    renameSync(tmp, this.file)
+    remplacer(tmp, this.file)
     this.mtime = statSync(this.file).mtimeMs
   }
 }

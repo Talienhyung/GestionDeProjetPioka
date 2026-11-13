@@ -33,7 +33,7 @@ export function NavBar({ isChef, unread }: Props) {
   const droite: Entree[] = [
     isChef
       ? { href: '/validation', label: 'Valider', icone: 'coche' }
-      : { href: '/agenda', label: 'Agenda', icone: 'calendrier' },
+      : { href: '/parcours', label: 'Parcours', icone: 'parcours' },
     { href: '/profil', label: 'Profil', icone: 'personne' },
   ]
 

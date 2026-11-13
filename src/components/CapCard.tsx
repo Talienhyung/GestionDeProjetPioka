@@ -36,7 +36,7 @@ export function CapCard({ projet, board, currentUserId }: Props) {
       className="group block overflow-hidden rounded-2xl border border-trait bg-carte transition-colors hover:border-encre-douce"
     >
       {couverture ? (
-        <div className="relative aspect-[2/1] overflow-hidden bg-surface-haute">
+        <div className="relative h-20 overflow-hidden bg-surface-haute sm:h-24">
           {/* eslint-disable-next-line @next/next/no-img-element -- image privée servie par l'API, après session */}
           <img
             src={couverture}

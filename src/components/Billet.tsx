@@ -128,13 +128,15 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
             {note.title ? <h3 className="panneau-titre text-base leading-snug">{note.title}</h3> : null}
             <p className="mt-0.5 whitespace-pre-wrap text-sm">{note.body}</p>
 
-            <p className="mt-3 text-[11px] text-encre-douce">
-              {note.author.displayName} · {quand(note.updatedAt)}
-            </p>
-
-            {modifiable ? (
-              <Gestes note={note} projectId={projectId} mien={mien} isChef={isChef} onModifier={() => setEnEdition(true)} />
-            ) : null}
+            <div className="mt-3 flex items-end justify-between gap-2">
+              <p className="text-[11px] leading-tight text-encre-douce">
+                {note.author.displayName}
+                <span className="block">{quand(note.updatedAt)}</span>
+              </p>
+              {modifiable ? (
+                <Gestes note={note} projectId={projectId} mien={mien} isChef={isChef} onModifier={() => setEnEdition(true)} />
+              ) : null}
+            </div>
           </>
         )}
       </div>
@@ -142,7 +144,10 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
   )
 }
 
-/** Modifier, supprimer, épingler : selon qui regarde. */
+const bouton =
+  'grid size-7 place-items-center rounded-full text-encre-douce transition-colors hover:bg-encre/10 hover:text-encre'
+
+/** Modifier, épingler, supprimer : des icônes, groupées en bas à droite du billet. */
 function Gestes({
   note,
   projectId,
@@ -157,30 +162,71 @@ function Gestes({
   /** null : rien à réécrire (un polaroid n'a que sa photo et sa légende). */
   onModifier: (() => void) | null
 }) {
+  if (!mien && !isChef) return null
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+    <div className="-mr-1 -mb-1 flex shrink-0 items-center">
       {mien && onModifier ? (
-        <button type="button" onClick={onModifier} className="underline">
-          modifier
+        <button type="button" onClick={onModifier} aria-label="modifier" title="Modifier" className={bouton}>
+          <IconeCrayon />
         </button>
       ) : null}
 
-      {mien || isChef ? (
+      {isChef ? (
         <ActionButton
-          action={deleteNoteAction.bind(null, note.id, projectId)}
-          className="underline"
-          confirm="Retirer ce billet du tableau ?"
+          action={pinNoteAction.bind(null, note.id, projectId, !note.pinned)}
+          label={note.pinned ? 'dépingler' : 'épingler'}
+          className={`${bouton} ${note.pinned ? '!text-accent' : ''}`}
         >
-          supprimer
+          <IconePunaise pleine={note.pinned} />
         </ActionButton>
       ) : null}
 
-      {isChef ? (
-        <ActionButton action={pinNoteAction.bind(null, note.id, projectId, !note.pinned)} className="underline">
-          {note.pinned ? 'dépingler' : 'épingler'}
-        </ActionButton>
-      ) : null}
+      <ActionButton
+        action={deleteNoteAction.bind(null, note.id, projectId)}
+        label="supprimer"
+        confirm="Retirer ce billet du tableau ?"
+        className={`${bouton} hover:!bg-erreur-doux hover:!text-erreur`}
+      >
+        <IconeCorbeille />
+      </ActionButton>
     </div>
+  )
+}
+
+const trait = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+}
+
+function IconeCrayon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path {...trait} d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4" />
+    </svg>
+  )
+}
+
+function IconeCorbeille() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path {...trait} d="M4 7h16 M10 11v6 M14 11v6 M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12 M9 7V4h6v3" />
+    </svg>
+  )
+}
+
+function IconePunaise({ pleine }: { pleine: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path
+        {...trait}
+        fill={pleine ? 'currentColor' : 'none'}
+        d="M9 4h6l-1 5 3 3v2H7v-2l3-3-1-5Z"
+      />
+      <path {...trait} d="M12 14v7" />
+    </svg>
   )
 }
 
@@ -207,11 +253,14 @@ function Polaroid({ note, inclinaison, actions }: { note: Props['note']; inclina
         />
       </div>
       {note.title ? <p className="brush mt-1.5 text-center text-xl leading-tight break-words">{note.title}</p> : null}
-      <p className={`text-center text-[10px] text-encre-douce ${note.title ? '' : 'mt-1.5'}`}>
-        {note.author.displayName} · {quand(note.updatedAt)}
-      </p>
-      {note.pinned ? <p className="panneau text-center text-[9px] text-accent-encre">épinglé</p> : null}
-      {actions ? <div className="flex justify-center">{actions}</div> : null}
+      <div className={`flex items-end justify-between gap-1 ${note.title ? '' : 'mt-1.5'}`}>
+        <p className="text-[10px] leading-tight text-encre-douce">
+          {note.author.displayName}
+          <span className="block">{quand(note.updatedAt)}</span>
+        </p>
+        {actions}
+      </div>
+      {note.pinned ? <p className="panneau text-[9px] text-accent-encre">épinglé</p> : null}
     </article>
   )
 }
