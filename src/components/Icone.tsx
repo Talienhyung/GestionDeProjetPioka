@@ -14,6 +14,7 @@ export type NomIcone =
   | 'fanion'
   | 'reglages'
   | 'calendrier'
+  | 'parcours'
 
 /** Chaque icône du site renvoie à un pictogramme officiel SGDF. */
 const PICTO_DE: Record<Exclude<NomIcone, 'chevron'>, NomPicto> = {
@@ -28,6 +29,7 @@ const PICTO_DE: Record<Exclude<NomIcone, 'chevron'>, NomPicto> = {
   fanion: 'drapeau',
   reglages: 'engrenage',
   calendrier: 'calendrier',
+  parcours: 'trek',
 }
 
 interface Props {

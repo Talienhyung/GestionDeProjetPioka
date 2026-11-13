@@ -386,3 +386,26 @@ select {
   mask: var(--picto) center / contain no-repeat;
   -webkit-mask: var(--picto) center / contain no-repeat;
 }
+
+/* ── Parcours : la route du jeune, une étape au centre ──────────────────── */
+.route-piste {
+  --route-carte: min(76vw, 21rem);
+  --route-ecart: 1.25rem;
+  gap: var(--route-ecart);
+  /* Assez de marge pour que la première et la dernière étape se centrent. */
+  padding-inline: calc(50% - var(--route-carte) / 2);
+  padding-block: 0.25rem 0.75rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.route-etape {
+  width: var(--route-carte);
+}
+.route-carte {
+  display: block;
+  transform: scale(var(--echelle, 1));
+  transform-origin: 50% 0;
+  opacity: var(--opacite, 1);
+  will-change: transform, opacity;
+}
+
