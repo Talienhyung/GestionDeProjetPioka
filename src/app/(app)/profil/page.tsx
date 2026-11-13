@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { EcussonBadge } from '@/components/EcussonBadge'
 import { Picto } from '@/components/sgdf/Picto'
+import type { NomPicto } from '@/components/sgdf/pictos'
+import { logoutAction } from '@/app/(auth)/login/actions'
 import { requireUser } from '@/lib/auth/guard'
 import { badgeReason } from '@/lib/domain/badgeReasons'
 import { isChef } from '@/lib/domain/types'
@@ -11,7 +13,7 @@ import { salutation } from '@/lib/ui/salutation'
 
 const MOTIFS: Record<string, string> = {
   TACHE: 'Tâche validée',
-  BONUS: 'Bonus',
+  BONUS: 'Points d’un chef',
   ROLE: 'Rôle tenu',
   BADGE: 'Badge débloqué',
   ANNULATION: 'Validation annulée',
@@ -22,9 +24,10 @@ const INCLINAISONS = ['-rotate-[8deg]', 'rotate-[5deg]', '-rotate-[4deg]', 'rota
 
 export default async function ProfilPage() {
   const user = await requireUser()
-  const [score, ledger, earned] = await Promise.all([
+  const [score, ledger, moi, earned] = await Promise.all([
     getScore(db, user.id),
     getLedger(db, user.id),
+    db.user.findUnique({ where: { id: user.id }, select: { groupe: { select: { name: true } } } }),
     db.userBadge.findMany({
       where: { userId: user.id },
       include: { badge: true, project: { select: { title: true } } },
@@ -32,20 +35,37 @@ export default async function ProfilPage() {
     }),
   ])
 
-  const liensGestion = [
+  // L'espace de gestion, rangé par thème. Chaque section n'apparaît qu'à qui y a accès.
+  const sectionsGestion: { titre: string; liens: { href: string; label: string; detail: string; picto: NomPicto }[] }[] = [
     ...(isChef(user)
       ? [
-          { href: '/pilotage', label: 'Pilotage des CAP' },
-          { href: '/membres', label: 'Les jeunes' },
-          { href: '/extra-jobs', label: 'Extra jobs' },
+          {
+            titre: 'La caravane',
+            liens: [
+              { href: '/membres', label: 'Les jeunes', detail: 'Récompenser, mot de passe oublié', picto: 'visage' as NomPicto },
+              { href: '/groupes', label: 'Les groupes', detail: 'Composer les équipes', picto: 'equipe' as NomPicto },
+            ],
+          },
+          {
+            titre: 'Les CAP',
+            liens: [
+              { href: '/pilotage', label: 'Pilotage des CAP', detail: 'Phases, couvertures, archives', picto: 'boussole' as NomPicto },
+              { href: '/extra-jobs', label: 'Extra jobs', detail: 'Petits boulots et récoltes', picto: 'euros' as NomPicto },
+            ],
+          },
         ]
       : []),
     ...(user.role === 'SUPER_ADMIN'
       ? [
-          { href: '/comptes', label: 'Comptes' },
-          { href: '/badges', label: 'Badges' },
-          { href: '/parametres', label: 'Paramètres' },
-          { href: '/sauvegarde', label: 'Sauvegarde' },
+          {
+            titre: 'Administration',
+            liens: [
+              { href: '/comptes', label: 'Comptes', detail: 'Créer en lot, désactiver, supprimer', picto: 'equipe' as NomPicto },
+              { href: '/badges', label: 'Badges', detail: 'Écussons, pictos, niveaux', picto: 'promesse' as NomPicto },
+              { href: '/parametres', label: 'Paramètres', detail: 'Paliers des récoltes, barème', picto: 'engrenage' as NomPicto },
+              { href: '/sauvegarde', label: 'Sauvegarde', detail: 'Exporter les données', picto: 'coche' as NomPicto },
+            ],
+          },
         ]
       : []),
   ]
@@ -62,6 +82,7 @@ export default async function ProfilPage() {
         <div className="min-w-0">
           <p className="panneau text-xs opacity-85">{salutation()}</p>
           <h1 className="brush text-5xl leading-[0.95] break-words">{user.displayName}</h1>
+          {moi?.groupe ? <p className="panneau mt-1 text-xs opacity-85">Groupe · {moi.groupe.name}</p> : null}
         </div>
       </header>
 
@@ -86,13 +107,13 @@ export default async function ProfilPage() {
           </div>
         ) : (
           <ul className="grid grid-cols-3 gap-x-3 gap-y-6 pt-2 sm:grid-cols-4">
-            {earned.map(({ id, badge, earnedAt, project }, i) => (
+            {earned.map(({ id, badge, earnedAt, project, reason }, i) => (
               <li key={id} className="flex justify-center">
                 <EcussonBadge
                   apparence={apparenceBadge(badge)}
                   name={badge.name}
                   description={badge.description}
-                  reason={badgeReason(badge.ruleType, badge.threshold)}
+                  reason={reason ?? badgeReason(badge.ruleType, badge.threshold)}
                   earnedAt={earnedAt}
                   projectTitle={project?.title ?? null}
                   points={badge.points}
@@ -118,6 +139,7 @@ export default async function ProfilPage() {
                 <span>
                   {MOTIFS[ligne.reason] ?? ligne.reason}
                   {ligne.taskTitle ? <span className="text-encre-douce"> · {ligne.taskTitle}</span> : null}
+                  {ligne.note ? <span className="block text-xs text-encre-douce">« {ligne.note} »</span> : null}
                 </span>
                 <span className={`font-semibold ${ligne.amount < 0 ? 'text-erreur' : 'text-ok'}`}>
                   {ligne.amount > 0 ? '+' : ''}
@@ -129,27 +151,46 @@ export default async function ProfilPage() {
         )}
       </section>
 
-      {liensGestion.length > 0 ? (
-        <section>
-          <h2 className="panneau-titre mb-2 text-lg">Gestion</h2>
-          <ul className="flex flex-col gap-2">
-            {liensGestion.map((lien) => (
-              <li key={lien.href}>
-                <Link
-                  href={lien.href}
-                  className="block rounded-lg border border-trait bg-carte p-3 font-semibold hover:text-accent"
-                >
-                  {lien.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+      {sectionsGestion.length > 0 ? (
+        <section className="flex flex-col gap-5">
+          <h2 className="panneau-titre text-lg">Gestion</h2>
+          {sectionsGestion.map((section) => (
+            <div key={section.titre}>
+              <h3 className="panneau mb-2 text-[11px] text-encre-douce">{section.titre}</h3>
+              <ul className="overflow-hidden rounded-xl border border-trait bg-carte">
+                {section.liens.map((lien, i) => (
+                  <li key={lien.href} className={i > 0 ? 'border-t border-trait' : ''}>
+                    <Link href={lien.href} className="group flex items-center gap-3 p-3 hover:bg-surface">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface-haute text-accent">
+                        <Picto nom={lien.picto} taille={22} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold group-hover:text-accent">{lien.label}</span>
+                        <span className="block truncate text-xs text-encre-douce">{lien.detail}</span>
+                      </span>
+                      <span aria-hidden className="text-encre-douce">›</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       ) : null}
 
-      <Link href="/profil/mot-de-passe" className="rounded-lg border border-trait bg-carte p-3 text-center font-semibold">
-        Changer mon mot de passe
-      </Link>
+      <div className="flex flex-col gap-2">
+        <Link href="/profil/mot-de-passe" className="rounded-lg border border-trait bg-carte p-3 text-center font-semibold">
+          Changer mon mot de passe
+        </Link>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="w-full rounded-lg p-3 text-center font-semibold text-erreur hover:bg-erreur-doux"
+          >
+            Se déconnecter
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

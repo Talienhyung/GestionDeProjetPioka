@@ -11,6 +11,9 @@ export interface PointsInput {
   submissionId?: string
   projectRoleId?: string
   badgeId?: string
+  /** Points donnés à la main : la raison écrite par le chef. */
+  note?: string
+  awardedById?: string
 }
 
 export interface LedgerLine {
@@ -19,6 +22,7 @@ export interface LedgerLine {
   reason: string
   createdAt: Date
   taskTitle: string | null
+  note: string | null
 }
 
 export interface LeaderboardRow {
@@ -66,6 +70,7 @@ export async function getLedger(db: Db, userId: string, projectId?: string): Pro
     reason: row.reason,
     createdAt: row.createdAt,
     taskTitle: row.task?.title ?? null,
+    note: row.note ?? null,
   }))
 }
 

@@ -37,7 +37,7 @@ export async function getParcours(db: Db, actor: Actor, maintenant = new Date())
     }),
     db.userBadge.findMany({
       where: { userId },
-      select: { earnedAt: true, badge: { select: { id: true, name: true, description: true } } },
+      select: { earnedAt: true, reason: true, badge: { select: { id: true, name: true, description: true } } },
     }),
     db.extraJobWorker.findMany({
       where: { userId },
@@ -45,7 +45,7 @@ export async function getParcours(db: Db, actor: Actor, maintenant = new Date())
     }),
     db.pointsEntry.findMany({
       where: { userId },
-      select: { amount: true, reason: true, createdAt: true, taskId: true, projectRoleId: true, badgeId: true },
+      select: { amount: true, reason: true, note: true, createdAt: true, taskId: true, projectRoleId: true, badgeId: true },
     }),
   ])
 
@@ -92,6 +92,7 @@ export async function getParcours(db: Db, actor: Actor, maintenant = new Date())
       name: b.badge.name,
       description: b.badge.description,
       earnedAt: b.earnedAt,
+      reason: b.reason,
     })),
     boulots: boulots.map((b) => b.extraJob),
     points,

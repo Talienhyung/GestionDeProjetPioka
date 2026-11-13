@@ -1,11 +1,13 @@
 'use client'
 
-import { useActionState } from 'react'
+import { use, useActionState } from 'react'
 import { loginAction } from './actions'
 import { Picto } from '@/components/sgdf/Picto'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams: Promise<{ identifiant?: string }> }) {
+  // Le QR code des bandes de connexion ouvre la page avec l'identifiant déjà rempli.
+  const { identifiant } = use(searchParams)
   const [state, action, pending] = useActionState(loginAction, EMPTY_FORM_STATE)
 
   return (
@@ -21,6 +23,7 @@ export default function LoginPage() {
           <span className="text-sm font-medium">Identifiant</span>
           <input
             name="username"
+            defaultValue={typeof identifiant === 'string' ? identifiant.slice(0, 40) : undefined}
             autoComplete="username"
             autoCapitalize="none"
             required
@@ -33,6 +36,7 @@ export default function LoginPage() {
           <input
             name="password"
             type="password"
+            autoFocus={Boolean(identifiant)}
             autoComplete="current-password"
             required
             className="rounded-lg border border-trait p-3 text-base"
