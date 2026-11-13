@@ -9,14 +9,25 @@ import sharp from 'sharp'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../../src/lib/auth/password'
 
-const DB_FILE = join(process.cwd(), 'e2e/e2e.db')
-const DB_URL = `file:${DB_FILE}`
+/** Base dédiée aux tests bout en bout, sur le serveur PostgreSQL de dev. */
+const DB_URL = (() => {
+  const url = new URL(process.env.TEST_DATABASE_URL ?? 'postgresql://cap:cap@localhost:5432/cap')
+  url.pathname = '/cap_e2e'
+  return url.toString()
+})()
 
 async function main() {
-  rmSync(DB_FILE, { force: true })
   rmSync(join(process.cwd(), 'e2e/uploads'), { recursive: true, force: true })
 
-  const env = { ...process.env, DATABASE_URL: DB_URL }
+  // Repartir de zéro : la base e2e est supprimée puis recréée.
+  const adminUrl = new URL(DB_URL)
+  adminUrl.pathname = '/postgres'
+  const admin = new PrismaClient({ datasourceUrl: adminUrl.toString() })
+  await admin.$executeRawUnsafe('DROP DATABASE IF EXISTS "cap_e2e" WITH (FORCE)')
+  await admin.$executeRawUnsafe('CREATE DATABASE "cap_e2e"')
+  await admin.$disconnect()
+
+  const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL }
   // Les CLI sont lancés avec node : les raccourcis de node_modules/.bin sont
   // des scripts shell que Windows ne sait pas exécuter directement.
   execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate', '--accept-data-loss'], {

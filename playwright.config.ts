@@ -1,9 +1,12 @@
 import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
-// Chemin absolu : Prisma résout les URL SQLite relatives depuis le dossier du
-// schéma, pas depuis la racine du projet.
-const DATABASE_URL = `file:${join(process.cwd(), 'e2e/e2e.db')}`
+// Base dédiée, recréée à chaque lancement par e2e/helpers/seed.ts.
+const DATABASE_URL = (() => {
+  const url = new URL(process.env.TEST_DATABASE_URL ?? 'postgresql://cap:cap@localhost:5432/cap')
+  url.pathname = '/cap_e2e'
+  return url.toString()
+})()
 
 export default defineConfig({
   testDir: './e2e',
@@ -24,7 +27,10 @@ export default defineConfig({
     timeout: 180_000,
     env: {
       DATABASE_URL,
+      DIRECT_URL: DATABASE_URL,
       UPLOAD_DIR: join(process.cwd(), 'e2e/uploads'),
+      // Les photos des tests restent sur le disque, même si S3 est configuré.
+      S3_BUCKET: '',
     },
   },
 })

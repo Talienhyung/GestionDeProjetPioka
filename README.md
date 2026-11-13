@@ -7,17 +7,28 @@ et des badges ; les chefs valident ou renvoient à corriger.
 - Conception : `docs/superpowers/specs/2026-10-15-cap-pionniers-design.md`
 - Plan d'implémentation : `docs/superpowers/plans/2026-10-15-cap-pionniers.md`
 
+## Hébergement
+
+Deux façons d'héberger le site, sur la même base de code :
+
+- **AWS Amplify Hosting** (serverless) : base PostgreSQL gérée, photos dans S3.
+  Pas à pas : [`docs/deploiement-amplify.md`](docs/deploiement-amplify.md).
+- **Ton propre serveur** avec Docker, décrit ci-dessous.
+
 ## Installation sur ton serveur
 
 Prérequis : Docker et le plugin Compose.
 
 ```bash
 git clone <ton-dépôt> site-cap && cd site-cap
-echo "SUPER_ADMIN_PASSWORD=choisis-un-mot-de-passe-solide" > .env
+cat > .env <<EOF
+SUPER_ADMIN_PASSWORD=choisis-un-mot-de-passe-solide
+POSTGRES_PASSWORD=un-autre-mot-de-passe-solide
+EOF
 docker compose up -d --build
 ```
 
-Le site écoute sur le port 3000. Au premier démarrage, le conteneur applique les
+Le site écoute sur le port 3000, sa base PostgreSQL tourne dans un second conteneur. Au premier démarrage, le conteneur applique les
 migrations, crée les 10 badges, les 22 tâches types du catalogue, un premier CAP
 et le compte super admin (`admin` par défaut, `SUPER_ADMIN_USERNAME` pour en
 changer).
@@ -54,15 +65,18 @@ Un jeune qui oublie son mot de passe : un chef lui en génère un nouveau depuis
 sh scripts/backup.sh /chemin/vers/sauvegardes
 ```
 
-Copie cohérente de la base (`VACUUM INTO`) et archive des photos, horodatées,
-avec rotation sur les 30 dernières. À mettre dans cron :
+Copie cohérente de la base (`pg_dump`) et archive des photos, horodatées, avec
+rotation sur les 30 dernières. À mettre dans cron :
 
 ```
 0 3 * * * /chemin/vers/site-cap/scripts/backup.sh /chemin/vers/sauvegardes
 ```
 
-Pour restaurer : arrête le conteneur, remplace `/data/cap.db` dans le volume par
-la sauvegarde choisie, redémarre.
+Pour restaurer la base :
+
+```bash
+docker compose exec -T db pg_restore -U cap -d cap --clean < sauvegardes/cap-AAAA-MM-JJ_HHMM.dump
+```
 
 ## Mise à jour
 
@@ -74,15 +88,19 @@ Les migrations s'appliquent automatiquement au démarrage.
 
 ## Développement
 
-Node.js 20.19+ et npm.
+Node.js 20.19+, npm et Docker (pour la base PostgreSQL locale).
 
 ```bash
 npm install
 cp .env.example .env
+docker compose -f docker-compose.dev.yml up -d   # PostgreSQL sur le port 5432
 npx prisma migrate dev
 npx prisma db seed
 npm run dev        # http://localhost:3000
 ```
+
+Les tests utilisent le même serveur PostgreSQL : chaque test d'intégration crée
+puis supprime sa propre base (`TEST_DATABASE_URL` pour viser un autre serveur).
 
 | Commande | Rôle |
 |---|---|

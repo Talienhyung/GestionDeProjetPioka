@@ -3,6 +3,7 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import { MAX_PHOTO_BYTES, UploadError, assertBatchAllowed } from '@/lib/domain/uploads'
+import { type ObjectStore, s3StoreFromEnv } from '@/lib/s3Store'
 
 export interface StoredPhoto {
   storedName: string
@@ -15,8 +16,27 @@ export interface StoredPhoto {
 
 const MAX_EDGE = 1600
 
-function uploadDir(): string {
-  return process.env.UPLOAD_DIR ?? './.uploads'
+/**
+ * Où vivent les photos. Avec S3_BUCKET (Amplify), dans un bucket S3 privé ;
+ * sinon dans un dossier du disque (UPLOAD_DIR), pour Docker et le poste.
+ * Dans les deux cas les photos ne sont servies que par /api/fichiers, après
+ * vérification de la session : le bucket n'est jamais public.
+ */
+function store(): ObjectStore {
+  return s3StoreFromEnv() ?? diskStore(process.env.UPLOAD_DIR ?? './.uploads')
+}
+
+function diskStore(dir: string): ObjectStore {
+  return {
+    async put(name, data) {
+      await mkdir(dir, { recursive: true })
+      await writeFile(join(dir, name), data)
+    },
+    get: (name) => readFile(join(dir, name)),
+    async remove(name) {
+      await unlink(join(dir, name)).catch(() => undefined)
+    },
+  }
 }
 
 function assertSafeName(storedName: string): void {
@@ -26,7 +46,7 @@ function assertSafeName(storedName: string): void {
 }
 
 /**
- * Valide, réencode en WebP sans métadonnées, redimensionne et écrit sur le volume.
+ * Valide, réencode en WebP sans métadonnées, redimensionne et enregistre.
  * Rien n'est écrit tant que l'image n'a pas été décodée avec succès.
  */
 export async function storePhoto(buffer: Buffer, originalName: string): Promise<StoredPhoto> {
@@ -49,8 +69,7 @@ export async function storePhoto(buffer: Buffer, originalName: string): Promise<
     .toBuffer({ resolveWithObject: true })
 
   const storedName = `${randomBytes(16).toString('hex')}.webp`
-  await mkdir(uploadDir(), { recursive: true })
-  await writeFile(join(uploadDir(), storedName), output.data)
+  await store().put(storedName, output.data, 'image/webp')
 
   return {
     storedName,
@@ -64,10 +83,10 @@ export async function storePhoto(buffer: Buffer, originalName: string): Promise<
 
 export async function readPhoto(storedName: string): Promise<Buffer> {
   assertSafeName(storedName)
-  return readFile(join(uploadDir(), storedName))
+  return store().get(storedName)
 }
 
 export async function deletePhoto(storedName: string): Promise<void> {
   assertSafeName(storedName)
-  await unlink(join(uploadDir(), storedName)).catch(() => undefined)
+  await store().remove(storedName)
 }

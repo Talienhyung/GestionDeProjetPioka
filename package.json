@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1168.0",
     "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.19.3",
     "next": "15.5.28",

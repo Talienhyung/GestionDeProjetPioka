@@ -5,10 +5,12 @@ import { useActionState, useState } from 'react'
 import { submitAction } from '@/app/(app)/cap/[projectId]/tache/[taskId]/actions'
 import { Picto } from '@/components/sgdf/Picto'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
+import { reduireChampPhotos } from '@/lib/ui/reduirePhoto'
 
 export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorriger: boolean }) {
   const [state, action, pending] = useActionState(submitAction, EMPTY_FORM_STATE)
   const [photos, setPhotos] = useState<string[]>([])
+  const [preparation, setPreparation] = useState(false)
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-trait bg-carte p-4">
@@ -36,7 +38,16 @@ export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorrige
           name="photos"
           accept="image/jpeg,image/png,image/webp"
           multiple
-          onChange={(e) => setPhotos(Array.from(e.target.files ?? []).map((f) => f.name))}
+          onChange={async (e) => {
+            const champ = e.currentTarget
+            setPhotos(Array.from(champ.files ?? []).map((f) => f.name))
+            setPreparation(true)
+            try {
+              await reduireChampPhotos(champ)
+            } finally {
+              setPreparation(false)
+            }
+          }}
           className="sr-only"
         />
       </label>
@@ -44,9 +55,9 @@ export function SubmitWorkForm({ taskId, aCorriger }: { taskId: string; aCorrige
       {state.error ? <p role="alert" className="rounded-lg bg-erreur-doux p-3 text-sm text-erreur">{state.error}</p> : null}
       {state.success ? <p className="rounded-lg bg-ok-doux p-3 text-sm text-ok">{state.success}</p> : null}
 
-      <button type="submit" disabled={pending}
+      <button type="submit" disabled={pending || preparation}
         className="panneau rounded-lg bg-bouton p-3 text-base text-sur-bouton disabled:opacity-60">
-        {pending ? 'Envoi…' : 'Soumettre aux chefs'}
+        {pending ? 'Envoi…' : preparation ? 'Préparation des photos…' : 'Soumettre aux chefs'}
       </button>
     </form>
   )

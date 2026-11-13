@@ -4,7 +4,7 @@ import { createTestDb, type TestDb } from '../helpers/db'
 
 describe('schéma', () => {
   let t: TestDb
-  beforeAll(() => { t = createTestDb() })
+  beforeAll(async () => { t = await createTestDb() })
   afterAll(async () => { await t.cleanup() })
 
   it('crée un jeune et refuse un identifiant en doublon', async () => {

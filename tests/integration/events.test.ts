@@ -16,7 +16,7 @@ describe('agenda', () => {
   const titres = async (actor: Actor) => (await listEvents(t.prisma, actor, debut, fin)).map((e) => e.title)
 
   beforeEach(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     const mk = async (username: string, role: Actor['role']): Promise<Actor> => {
       const u = await t.prisma.user.create({ data: { username, displayName: username, passwordHash: 'x', role } })
       return { id: u.id, role, displayName: username }

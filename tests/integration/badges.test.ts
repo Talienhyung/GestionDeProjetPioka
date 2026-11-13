@@ -10,7 +10,7 @@ describe('badges', () => {
   let projectId: string
 
   beforeEach(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     userId = (await t.prisma.user.create({ data: { username: 'lucie', displayName: 'Lucie', passwordHash: 'x', role: 'JEUNE' } })).id
     projectId = (await t.prisma.project.create({ data: { title: 'Camp 2027' } })).id
     await t.prisma.badge.createMany({

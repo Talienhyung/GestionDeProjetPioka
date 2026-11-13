@@ -1,11 +1,32 @@
+# Hébergement sur son propre serveur : le site et sa base PostgreSQL.
+# Les photos vivent sur un volume (ou dans S3 si S3_BUCKET est défini).
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cap
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?définis POSTGRES_PASSWORD dans .env}"
+      POSTGRES_DB: cap
+    volumes:
+      - cap-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cap"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   app:
     build: .
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "file:/data/cap.db"
+      DATABASE_URL: "postgresql://cap:${POSTGRES_PASSWORD}@db:5432/cap"
+      DIRECT_URL: "postgresql://cap:${POSTGRES_PASSWORD}@db:5432/cap"
       UPLOAD_DIR: "/data/uploads"
       SUPER_ADMIN_USERNAME: "${SUPER_ADMIN_USERNAME:-admin}"
       SUPER_ADMIN_PASSWORD: "${SUPER_ADMIN_PASSWORD:?définis SUPER_ADMIN_PASSWORD dans .env}"
@@ -13,4 +34,5 @@ services:
       - cap-data:/data
 
 volumes:
+  cap-db:
   cap-data:

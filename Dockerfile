@@ -1,8 +1,9 @@
-# Image unique : le site, sa base SQLite et les photos vivent sur un volume.
+# Image du site. La base PostgreSQL tourne à côté (docker-compose.yml) ;
+# les photos vivent sur un volume, ou dans S3 si S3_BUCKET est défini.
 FROM node:22-slim AS base
 # openssl est requis par les moteurs Prisma sur Debian slim.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends openssl ca-certificates sqlite3 \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
@@ -19,7 +20,6 @@ FROM base AS runtime
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-ENV DATABASE_URL="file:/data/cap.db"
 ENV UPLOAD_DIR="/data/uploads"
 
 COPY --from=build /app/.next/standalone ./

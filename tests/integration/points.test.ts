@@ -11,7 +11,7 @@ describe('grand livre des points', () => {
   let projectId: string
 
   beforeAll(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     lucie = (await t.prisma.user.create({ data: { username: 'lucie', displayName: 'Lucie', passwordHash: 'x', role: 'JEUNE' } })).id
     tom = (await t.prisma.user.create({ data: { username: 'tom', displayName: 'Tom', passwordHash: 'x', role: 'JEUNE' } })).id
     projectId = (await t.prisma.project.create({ data: { title: 'Camp 2027' } })).id
@@ -68,7 +68,7 @@ describe('notifications', () => {
   let userId: string
 
   beforeAll(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     userId = (await t.prisma.user.create({ data: { username: 'lucie', displayName: 'Lucie', passwordHash: 'x', role: 'JEUNE' } })).id
   })
   afterAll(async () => { await t.cleanup() })

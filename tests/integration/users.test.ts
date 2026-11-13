@@ -19,7 +19,7 @@ describe('comptes', () => {
   let chef: Actor
 
   beforeEach(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     const u = await t.prisma.user.create({
       data: { username: 'admin', displayName: 'Admin', passwordHash: 'x', role: 'SUPER_ADMIN' },
     })

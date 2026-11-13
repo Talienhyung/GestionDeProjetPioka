@@ -8,7 +8,7 @@ describe('sessions', () => {
   let userId: string
 
   beforeAll(async () => {
-    t = createTestDb()
+    t = await createTestDb()
     const user = await t.prisma.user.create({
       data: { username: 'lucie', displayName: 'Lucie', passwordHash: 'x', role: 'JEUNE', mustChangePassword: false },
     })

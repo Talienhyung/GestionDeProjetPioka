@@ -26,7 +26,7 @@ describe('soumission et revue', () => {
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), 'cap-sub-'))
     process.env.UPLOAD_DIR = dir
-    t = createTestDb()
+    t = await createTestDb()
 
     const mk = async (username: string, role: Actor['role']): Promise<Actor> => {
       const u = await t.prisma.user.create({ data: { username, displayName: username, passwordHash: 'x', role } })
