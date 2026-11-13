@@ -127,7 +127,15 @@ export async function deleteProject(db: PrismaClient, actor: Actor, projectId: s
       where: { submission: { task: { projectId } } },
       select: { storedName: true },
     })
+    const billets = await tx.note.findMany({
+      where: { projectId, imageName: { not: null } },
+      select: { imageName: true },
+    })
     await tx.project.delete({ where: { id: projectId } })
-    return [...(project.coverName ? [project.coverName] : []), ...photos.map((p) => p.storedName)]
+    return [
+      ...(project.coverName ? [project.coverName] : []),
+      ...photos.map((p) => p.storedName),
+      ...billets.map((b) => b.imageName as string),
+    ]
   })
 }

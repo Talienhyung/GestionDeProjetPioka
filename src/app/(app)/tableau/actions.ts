@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/auth/guard'
 import { db } from '@/lib/db'
 import { type FormState, toFormError } from '@/lib/formState'
 import { createNote, deleteNote, setPinned, updateNote } from '@/lib/services/noteService'
+import { deletePhoto, fichierDuFormulaire, storeImage } from '@/lib/storage'
 
 /** Le tableau de la caravane n'a pas de projet : le champ arrive vide. */
 function lireProjet(formData: FormData): string | null {
@@ -20,19 +21,28 @@ function rafraichir(projectId: string | null) {
 export async function createNoteAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireUser()
   const projectId = lireProjet(formData)
+  const photo = formData.get('genre') === 'photo'
+  let imageName: string | null = null
 
   try {
+    if (photo) {
+      const fichier = await fichierDuFormulaire(formData, 'image')
+      if (!fichier) return { error: 'Choisis une photo à épingler.' }
+      imageName = (await storeImage(fichier.buffer, fichier.nom, 'polaroid')).storedName
+    }
     await createNote(db, user, {
       projectId,
       title: String(formData.get('title') ?? ''),
       body: String(formData.get('body') ?? ''),
+      imageName,
     })
   } catch (error) {
+    if (imageName) await deletePhoto(imageName).catch(() => undefined)
     return toFormError(error)
   }
 
   rafraichir(projectId)
-  return { success: 'Billet épinglé au tableau.' }
+  return { success: photo ? 'Photo épinglée au tableau.' : 'Billet épinglé au tableau.' }
 }
 
 export async function updateNoteAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -55,7 +65,8 @@ export async function updateNoteAction(_prev: FormState, formData: FormData): Pr
 export async function deleteNoteAction(noteId: string, projectId: string | null): Promise<FormState> {
   const user = await requireUser()
   try {
-    await deleteNote(db, user, noteId)
+    const photo = await deleteNote(db, user, noteId)
+    if (photo) await deletePhoto(photo).catch(() => undefined)
   } catch (error) {
     return toFormError(error)
   }

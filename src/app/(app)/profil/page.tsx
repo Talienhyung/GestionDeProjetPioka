@@ -45,6 +45,7 @@ export default async function ProfilPage() {
           { href: '/comptes', label: 'Comptes' },
           { href: '/badges', label: 'Badges' },
           { href: '/parametres', label: 'Paramètres' },
+          { href: '/sauvegarde', label: 'Sauvegarde' },
         ]
       : []),
   ]

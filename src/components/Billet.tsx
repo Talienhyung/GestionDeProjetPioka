@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { type ReactNode, useActionState, useEffect, useState } from 'react'
 import { deleteNoteAction, pinNoteAction, updateNoteAction } from '@/app/(app)/tableau/actions'
 import { ActionButton } from '@/components/ActionButton'
 import { EMPTY_FORM_STATE } from '@/lib/formState'
@@ -11,6 +11,7 @@ interface Props {
     id: string
     title: string
     body: string
+    imageName: string | null
     pinned: boolean
     updatedAt: Date
     author: { id: string; displayName: string }
@@ -46,11 +47,27 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
     if (state.success) setEnEdition(false)
   }, [state.success])
 
+  const inclinaison = INCLINAISONS[empreinte(note.id) % INCLINAISONS.length]
+
+  if (note.imageName) {
+    return (
+      <Polaroid
+        note={note}
+        inclinaison={inclinaison}
+        actions={
+          modifiable ? (
+            <Gestes note={note} projectId={projectId} mien={mien} isChef={isChef} onModifier={null} />
+          ) : null
+        }
+      />
+    )
+  }
+
   return (
     <article
       className={`relative mb-4 break-inside-avoid rounded-sm pt-3 shadow-[0_1px_2px_rgb(0_58_93/0.12),0_6px_14px_-6px_rgb(0_58_93/0.25)] transition-transform hover:rotate-0 ${
         PAPIERS[empreinte(note.id) % PAPIERS.length]
-      } ${enEdition ? '' : INCLINAISONS[empreinte(note.id) % INCLINAISONS.length]}`}
+      } ${enEdition ? '' : inclinaison}`}
     >
       {/* Punaise : rouge pour un billet épinglé par un chef, bleue sinon. */}
       <span
@@ -116,36 +133,85 @@ export function Billet({ note, projectId, currentUserId, isChef, modifiable }: P
             </p>
 
             {modifiable ? (
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-                {mien ? (
-                  <button type="button" onClick={() => setEnEdition(true)} className="underline">
-                    modifier
-                  </button>
-                ) : null}
-
-                {mien || isChef ? (
-                  <ActionButton
-                    action={deleteNoteAction.bind(null, note.id, projectId)}
-                    className="underline"
-                    confirm="Retirer ce billet du tableau ?"
-                  >
-                    supprimer
-                  </ActionButton>
-                ) : null}
-
-                {isChef ? (
-                  <ActionButton
-                    action={pinNoteAction.bind(null, note.id, projectId, !note.pinned)}
-                    className="underline"
-                  >
-                    {note.pinned ? 'dépingler' : 'épingler'}
-                  </ActionButton>
-                ) : null}
-              </div>
+              <Gestes note={note} projectId={projectId} mien={mien} isChef={isChef} onModifier={() => setEnEdition(true)} />
             ) : null}
           </>
         )}
       </div>
+    </article>
+  )
+}
+
+/** Modifier, supprimer, épingler : selon qui regarde. */
+function Gestes({
+  note,
+  projectId,
+  mien,
+  isChef,
+  onModifier,
+}: {
+  note: Props['note']
+  projectId: string | null
+  mien: boolean
+  isChef: boolean
+  /** null : rien à réécrire (un polaroid n'a que sa photo et sa légende). */
+  onModifier: (() => void) | null
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+      {mien && onModifier ? (
+        <button type="button" onClick={onModifier} className="underline">
+          modifier
+        </button>
+      ) : null}
+
+      {mien || isChef ? (
+        <ActionButton
+          action={deleteNoteAction.bind(null, note.id, projectId)}
+          className="underline"
+          confirm="Retirer ce billet du tableau ?"
+        >
+          supprimer
+        </ActionButton>
+      ) : null}
+
+      {isChef ? (
+        <ActionButton action={pinNoteAction.bind(null, note.id, projectId, !note.pinned)} className="underline">
+          {note.pinned ? 'dépingler' : 'épingler'}
+        </ActionButton>
+      ) : null}
+    </div>
+  )
+}
+
+/** Une photo épinglée : un polaroid, légende manuscrite dessous, punaisé. */
+function Polaroid({ note, inclinaison, actions }: { note: Props['note']; inclinaison: string; actions: ReactNode }) {
+  return (
+    <article
+      className={`relative mb-4 break-inside-avoid bg-white p-2.5 pb-2 shadow-[0_1px_2px_rgb(0_58_93/0.15),0_8px_16px_-6px_rgb(0_58_93/0.35)] transition-transform hover:rotate-0 ${inclinaison}`}
+    >
+      {/* Un bout de ruban adhésif plutôt qu'une punaise : on ne perce pas une photo. */}
+      <span
+        aria-hidden
+        className={`absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 rotate-[-3deg] shadow-sm ${
+          note.pinned ? 'bg-accent/70' : 'bg-choisir-doux/90'
+        }`}
+      />
+      <div className="aspect-square overflow-hidden bg-surface-haute">
+        {/* eslint-disable-next-line @next/next/no-img-element -- image privée servie par l'API, après session */}
+        <img
+          src={`/api/billets/${note.id}/image?v=${note.imageName?.slice(0, 10)}`}
+          alt={note.title || `Photo de ${note.author.displayName}`}
+          loading="lazy"
+          className="size-full object-cover"
+        />
+      </div>
+      {note.title ? <p className="brush mt-1.5 text-center text-xl leading-tight break-words">{note.title}</p> : null}
+      <p className={`text-center text-[10px] text-encre-douce ${note.title ? '' : 'mt-1.5'}`}>
+        {note.author.displayName} · {quand(note.updatedAt)}
+      </p>
+      {note.pinned ? <p className="panneau text-center text-[9px] text-accent-encre">épinglé</p> : null}
+      {actions ? <div className="flex justify-center">{actions}</div> : null}
     </article>
   )
 }

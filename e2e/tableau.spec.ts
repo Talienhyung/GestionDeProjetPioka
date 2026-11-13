@@ -14,7 +14,7 @@ test('un jeune écrit un billet, le corrige, puis le retire', async ({ page }) =
   await page.getByRole('link', { name: 'Tableau' }).click()
   await page.waitForURL(/\/tableau$/)
 
-  await page.getByText('Écrire un billet').click()
+  await page.getByRole('button', { name: 'Écrire un billet' }).click()
   await page.getByPlaceholder('Titre (facultatif)').fill('Matériel')
   await page.getByPlaceholder('Une idée, une liste, un rappel').fill('tentes, réchaud')
   await page.getByRole('button', { name: 'Épingler au tableau' }).click()
@@ -35,7 +35,7 @@ test('un jeune écrit un billet, le corrige, puis le retire', async ({ page }) =
 test('un jeune ne peut ni modifier ni épingler le billet d’un autre', async ({ page }) => {
   await seConnecter(page, 'nina', 'motdepasse-initial')
   await page.goto('/tableau')
-  await page.getByText('Écrire un billet').click()
+  await page.getByRole('button', { name: 'Écrire un billet' }).click()
   await page.getByPlaceholder('Une idée, une liste, un rappel').fill('Billet de Nina')
   await page.getByRole('button', { name: 'Épingler au tableau' }).click()
   await expect(page.getByText('Billet de Nina')).toBeVisible()

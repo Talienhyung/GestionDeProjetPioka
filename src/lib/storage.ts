@@ -49,6 +49,8 @@ const FORMATS = {
   photo: { width: 1600, height: 1600, fit: 'inside', quality: 82 },
   /** Écusson : carré, recadré sur la zone la plus intéressante, très léger. */
   badge: { width: 384, height: 384, fit: 'cover', quality: 80 },
+  /** Polaroid du tableau : carré. */
+  polaroid: { width: 1080, height: 1080, fit: 'cover', quality: 80 },
   /** Couverture de CAP : bandeau 16:9. */
   couverture: { width: 1600, height: 900, fit: 'cover', quality: 78 },
 } as const

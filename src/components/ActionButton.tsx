@@ -29,7 +29,8 @@ export function ActionButton({ action, children, className = '', confirm }: Prop
         className={`${className} disabled:opacity-60`}
         onClick={() => {
           if (confirm && !window.confirm(confirm)) return
-          startTransition(async () => setState(await action()))
+          // Une action qui redirige (suppression, par exemple) ne rend rien.
+          startTransition(async () => setState((await action()) ?? {}))
         }}
       >
         {pending ? '…' : children}

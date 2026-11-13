@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Actor } from '@/lib/domain/types'
-import { createNote, deleteNote, listNotes, setPinned, updateNote } from '@/lib/services/noteService'
-import { archiveProject, createProject, launchProject } from '@/lib/services/projectService'
+import { createNote, deleteNote, listNotes, noteImageFor, setPinned, updateNote } from '@/lib/services/noteService'
+import { archiveProject, createProject, deleteProject, launchProject } from '@/lib/services/projectService'
 import { createTestDb, type TestDb } from '../helpers/db'
 
 describe('tableau de billets', () => {
@@ -108,5 +108,37 @@ describe('tableau de billets', () => {
       .rejects.toThrow()
     await expect(createNote(t.prisma, chef, { projectId: brouillon.id, title: 'Hop', body: 'x' }))
       .resolves.toBeTruthy()
+  })
+
+  it('épingle une photo polaroid : légende sans texte, photo à effacer au retrait', async () => {
+    const photo = 'f'.repeat(32) + '.webp'
+    const note = await createNote(t.prisma, lucie, {
+      projectId: null,
+      title: 'Feu de camp',
+      body: 'ce texte est ignoré',
+      imageName: photo,
+    })
+    expect(note).toMatchObject({ title: 'Feu de camp', body: '', imageName: photo })
+
+    // Sans légende ni texte, un polaroid reste valable : la photo suffit.
+    await createNote(t.prisma, tom, { projectId: null, title: '', body: '', imageName: 'e'.repeat(32) + '.webp' })
+    await expect(createNote(t.prisma, tom, { projectId: null, title: '', body: '' })).rejects.toThrow()
+
+    expect(await noteImageFor(t.prisma, tom, note.id)).toBe(photo)
+    expect(await deleteNote(t.prisma, lucie, note.id)).toBe(photo)
+  })
+
+  it('cache la photo d’un billet de brouillon aux jeunes, et l’efface avec le CAP', async () => {
+    const brouillon = await createProject(t.prisma, chef, { title: 'Secret' })
+    const note = await createNote(t.prisma, chef, {
+      projectId: brouillon.id,
+      title: '',
+      body: '',
+      imageName: 'a'.repeat(32) + '.webp',
+    })
+    await expect(noteImageFor(t.prisma, lucie, note.id)).rejects.toThrow()
+    expect(await noteImageFor(t.prisma, chef, note.id)).toBe('a'.repeat(32) + '.webp')
+
+    expect(await deleteProject(t.prisma, chef, brouillon.id)).toContain('a'.repeat(32) + '.webp')
   })
 })

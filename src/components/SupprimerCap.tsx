@@ -46,7 +46,8 @@ export function SupprimerCap({ titre, impact, archiver, supprimer }: Props) {
 
   const lancer = (action: () => Promise<FormState>) =>
     startTransition(async () => {
-      const resultat = await action()
+      // Supprimer redirige vers le pilotage : l'action ne rend alors rien.
+      const resultat = (await action()) ?? {}
       setState(resultat)
       if (resultat.success) fermer()
     })
