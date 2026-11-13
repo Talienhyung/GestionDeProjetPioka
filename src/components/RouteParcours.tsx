@@ -63,22 +63,11 @@ function empreinte(texte: string): number {
 }
 
 /** Hauteur de la zone du tampon : le pointillé passe à mi-hauteur. */
-const H_TAMPON = 164
+const H_TAMPON = 196
 /** Hauteur approximative d'une étape complète (tampon + texte) : sert à la centrer. */
-const H_CONTENU = 320
+const H_CONTENU = 350
 /** Hauteur des ondulations du pointillé. */
-const BOSSE = 22
-/** Demi-largeur visible de chaque genre de tampon : le pointillé s'arrête à son bord. */
-const RAYON: Record<GenreEtape, number> = {
-  DEPART: 76,
-  ACTIVITE: 76,
-  TACHE: 76,
-  ROLE: 72,
-  BOULOT: 76,
-  BONUS: 74,
-  BADGE: 66,
-  A_VENIR: 56,
-}
+const BOSSE = 18
 
 /**
  * La route du jeune, à parcourir du doigt : un coup de tampon par étape, une
@@ -104,21 +93,19 @@ export function RouteParcours({ etapes, depart }: { etapes: EtapeVue[]; depart: 
     const haut = Math.max(12, Math.round((el.clientHeight - H_CONTENU * zoom) / 2 + 44))
     el.style.setProperty('--haut-etape', `${haut}px`)
     const y = haut + H_TAMPON / 2
-    const pts = stations().map((s) => ({
-      x: s.offsetLeft + s.offsetWidth / 2,
-      r: RAYON[(s.dataset.genre ?? 'ACTIVITE') as GenreEtape] * zoom,
-    }))
-    // Un tronçon entre chaque paire de tampons, du bord de l'un au bord de
-    // l'autre : une vague douce (en haut puis en bas), qui part et arrive à plat.
-    let d = ''
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1].x + pts[i - 1].r + 6
-      const b = pts[i].x - pts[i].r - 6
-      const l = b - a
-      if (l < 24) continue
-      d += ` M ${a} ${y} C ${a + l * 0.3} ${y - BOSSE * 2} ${b - l * 0.3} ${y + BOSSE * 2} ${b} ${y}`
+    const xs = stations().map((s) => s.offsetLeft + s.offsetWidth / 2)
+    if (xs.length === 0) return
+    // Une seule vague continue, du premier tampon au dernier : une bosse par
+    // tronçon, alternativement vers le haut et vers le bas. Les points de
+    // contrôle symétriques gardent la même tangente de part et d'autre de chaque
+    // tampon, la courbe ne casse nulle part. Les tampons la recouvrent.
+    let d = `M ${xs[0]} ${y}`
+    for (let i = 1; i < xs.length; i++) {
+      const pas = xs[i] - xs[i - 1]
+      const sommet = y + (i % 2 === 0 ? 1 : -1) * BOSSE * 1.33
+      d += ` C ${xs[i - 1] + pas / 3} ${sommet} ${xs[i] - pas / 3} ${sommet} ${xs[i]} ${y}`
     }
-    setRoute({ d: d.trim(), largeur: el.scrollWidth, y })
+    setRoute({ d, largeur: el.scrollWidth, y })
   }, [])
 
   /** Met en avant l'étape du centre ; les autres rapetissent et pâlissent. */
@@ -228,6 +215,9 @@ function Etape({ etape, active }: { etape: EtapeVue; active: boolean }) {
       aria-current={active ? 'step' : undefined}
       data-genre={etape.genre}
     >
+      {/* Un cache de la couleur de la page sous chaque tampon : la vague passe
+          derrière. Hors de la carte, pour ne pas pâlir avec les voisines. */}
+      <span aria-hidden className="route-cache" />
       <Link
         href={etape.lien ?? '#'}
         aria-disabled={!etape.lien}
@@ -246,7 +236,7 @@ function Etape({ etape, active }: { etape: EtapeVue; active: boolean }) {
             <Tampon
               {...TAMPON[etape.genre as Exclude<GenreEtape, 'BADGE'>]}
               bas={dateTampon(etape.date)}
-              taille={avenir ? 112 : 152}
+              taille={avenir ? 136 : 184}
               angle={angle}
               graine={h % 97}
               pointille={avenir}
@@ -284,7 +274,7 @@ function Etape({ etape, active }: { etape: EtapeVue; active: boolean }) {
 /** Un badge gagné : l'écusson posé sur un éclat de lumière, avec son ruban de niveau. */
 function BadgeGagne({ badge, angle }: { badge: ApparenceBadge; angle: number }) {
   return (
-    <div className="relative grid size-40 shrink-0 place-items-center">
+    <div className="relative grid size-48 shrink-0 place-items-center">
       {/* Éclat : des rayons à la couleur du badge, qui tournent doucement. */}
       <span aria-hidden className="badge-eclat absolute inset-0" style={{ '--fond': badge.color } as CSSProperties} />
       {/* Confettis aux couleurs de la charte. */}
@@ -308,7 +298,7 @@ function BadgeGagne({ badge, angle }: { badge: ApparenceBadge; angle: number }) 
         />
       ))}
       <span className="relative" style={{ rotate: `${angle * 0.6}deg` }}>
-        <Ecusson {...badge} taille={104} ruban={false} />
+        <Ecusson {...badge} taille={128} ruban={false} />
       </span>
       <span className="panneau absolute bottom-3 bg-accent px-4 py-1 text-[10px] whitespace-nowrap text-sur-accent shadow-md [clip-path:polygon(0_0,100%_0,93%_50%,100%_100%,0_100%,7%_50%)]">
         Niveau {niveauRomain(badge.level)} · {NOMS_NIVEAUX[badge.level]}

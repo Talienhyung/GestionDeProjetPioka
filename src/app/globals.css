@@ -389,7 +389,7 @@ select {
 
 /* ── Parcours : la route du jeune, une étape au centre ──────────────────── */
 .route-piste {
-  --route-carte: min(60vw, 16rem);
+  --route-carte: min(64vw, 17.5rem);
   --route-ecart: 0px;
   gap: var(--route-ecart);
   /* Assez de marge pour que la première et la dernière étape se centrent. */
@@ -408,9 +408,24 @@ select {
 .route-carte {
   transform: scale(calc(var(--echelle, 1) * var(--zoom, 1)));
   /* Origine au centre du tampon : en rapetissant, il reste sur le pointillé. */
-  transform-origin: 50% calc(var(--haut-etape, 24px) + 82px);
+  transform-origin: 50% calc(var(--haut-etape, 24px) + 98px);
   opacity: var(--opacite, 1);
   will-change: transform, opacity;
+}
+/* Cache sous le tampon, couleur de la page : la vague disparaît derrière. */
+.route-cache {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--haut-etape, 24px) + 98px);
+  width: calc(178px * var(--zoom, 1));
+  height: calc(178px * var(--zoom, 1));
+  translate: -50% -50%;
+  border-radius: 38%;
+  background: var(--surface);
+}
+.route-avenir .route-cache {
+  width: calc(136px * var(--zoom, 1));
+  height: calc(136px * var(--zoom, 1));
 }
 /* Ce qui vient n'est pas encore vécu : plus petit, en gris. */
 .route-avenir .route-carte {

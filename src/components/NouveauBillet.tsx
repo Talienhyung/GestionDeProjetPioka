@@ -10,9 +10,9 @@ import { reduireChampPhotos } from '@/lib/ui/reduirePhoto'
 type Genre = 'billet' | 'photo'
 
 /**
- * Le bouton « + » du tableau : un disque orange, croix blanche, rangé dans le
- * coin bas droit du tableau. Il ouvre la fenêtre d'écriture, billet ou photo
- * polaroid.
+ * Le bouton « + » du tableau : un disque orange, croix blanche, en bas à droite
+ * de la colonne de contenu (et non du bord de l'écran, sur un ordinateur). Il
+ * ouvre la fenêtre d'écriture, billet ou photo polaroid.
  */
 export function NouveauBillet({ projectId }: { projectId: string | null }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -49,7 +49,7 @@ export function NouveauBillet({ projectId }: { projectId: string | null }) {
         type="button"
         onClick={ouvrir}
         aria-label="Écrire un billet"
-        className="pointer-events-auto grid size-14 place-items-center rounded-full bg-choisir text-white shadow-[0_6px_14px_-4px_rgb(0_58_93/0.45)] transition-transform hover:scale-105 active:scale-95"
+        className="fixed right-[max(1rem,calc((100vw-48rem)/2+1rem))] bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-30 grid size-14 place-items-center rounded-full bg-choisir text-white shadow-[0_6px_14px_-4px_rgb(0_58_93/0.45)] transition-transform hover:scale-105 active:scale-95"
       >
         <svg viewBox="0 0 24 24" className="size-7" aria-hidden>
           <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
@@ -61,7 +61,7 @@ export function NouveauBillet({ projectId }: { projectId: string | null }) {
         onClick={(e) => {
           if (e.target === dialog.current && !pending) dialog.current?.close()
         }}
-        className="ecusson-fiche pointer-events-auto m-auto w-[min(26rem,calc(100vw-1.5rem))] rounded-2xl bg-carte p-0 text-encre shadow-2xl backdrop:bg-institution/50 backdrop:backdrop-blur-sm"
+        className="ecusson-fiche m-auto w-[min(26rem,calc(100vw-1.5rem))] rounded-2xl bg-carte p-0 text-encre shadow-2xl backdrop:bg-institution/50 backdrop:backdrop-blur-sm"
       >
         <form key={tour} ref={formulaire} action={action} className="flex flex-col gap-4 p-5">
           <input type="hidden" name="projectId" value={projectId ?? ''} />
